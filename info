@@ -1,0 +1,1981 @@
+Skip to
+content
+Kaggle
+
+Create
+Home
+
+Competitions
+
+Datasets
+
+Models
+
+Benchmarks
+
+Game Arena
+
+Code
+
+Discussions
+
+Learn
+
+More
+
+
+View Active Events
+
+Search
+
+
+Sign In
+
+Register
+Kaggle uses cookies from Google to deliver and enhance the quality of its services and to analyze traffic.
+Learn more
+OK, Got it.
+Hyunseok Choi · 8y ago · 108,908 views
+DETECTING EARLY ALZHEIMER'S
+DETECTING EARLY ALZHEIMER'S
+
+Copy & Edit
+
+1423
+bronze medal
+
+Version 1 of 1
+Runtime
+8m 18s
+
+Input
+DATASETS
+
+mri-and-alzheimers
+
+Language
+Python
+
+Table of Contents
+
+License
+This Notebook has been released under the Apache 2.0 open source license.
+
+Continue exploring
+
+Input
+1 file
+
+Output
+0 files
+
+Logs
+497.7 second run - successful
+
+Comments
+16 comments
+Classifying Alzheimer's Disease Severity¶
+Ordinal Classification with a CNN
+Introduction
+An estimated 55 million or more individuals worldwide have Alzheimer’s. Whilst to date there is no cure for this neurodegenerative disease yet, early detection is crucial to slow down its progression, and manage quality of life for those affected.
+
+Our scope for this project was to build a novel CNN, able to classify Alzheimer’s into four ordinal classes differing in severity (none, very mild, mild, and moderate), using a dataset of 80,000 MRI brain scans taken along the brain’s z-axis. The classes reflect Clinical Dementia Rating Guidelines. The dataset comes from the OASIS study and includes 461 participants. There are 67.222 scans in the ‘non’ category, 13.725 scans in ‘very mild’, 5002 in ‘mild’ and 488 in the ‘moderate’ category; indicating a large degree of class imbalance.
+
+A (S)CNN model by Mehmood et. al, was able to classify Alzheimer’s into four categories using the OASIS dataset (2020). The goal is for our model to perform as well as, or preferably better, than current diagnostic tools (doctors, or other models). Moreover, we have identified sub-research questions which were at the core of our research: namely, whether using ordinal classification would yield better performance than categorical (regular) classification (which is also what differentiates our model from existing approaches, as we seek to keep ordinal information on the predictions instead of simply one-hot encoding). Second, investigating ways to optimally deal with class imbalance, and third, the use of different pre-trained bases. This model is aimed at individuals in the medical and neuroscientific community, as well as other data scientists seeking to build models from MRI and other medical scans.
+
+Our notebook will indicatively progress in the order: a methods section, a results section, and a conclusion with discussion. Our methods section includes data pre-processing, exploratory visuals, class imbalance methods, model training (for both categorical and ordinal outcomes) and hyperparameter tuning. Our results section looks at various performance metrics for the ordinal vs. categorical classification models, and provides visualizations for some of these metrics. Finally, conclusion and discussion involve main findings, robustness, limitations, and future suggestions.
+
+Methods
+1. Importing Packages & Downloading Data
+First the necessary packages were imported and the data was downloaded.
+
+1.1 Importing Packages
+# Importing packages 
+
+import numpy as np
+import pandas as pd
+import keras
+import matplotlib.pyplot as plt
+import re
+import os
+import random
+import tensorflow as tf
+import plotly.express as px
+
+from keras.models import Sequential
+from PIL import Image
+from keras.layers import Conv2D,Flatten,Dense,Dropout,BatchNormalization,MaxPooling2D
+from sklearn.preprocessing import OneHotEncoder, label_binarize
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import auc, average_precision_score, confusion_matrix, roc_auc_score, f1_score, confusion_matrix, precision_recall_fscore_support
+from tensorflow.keras.applications import EfficientNetB0, EfficientNetV2B1
+from tensorflow.keras import layers, models
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.models import clone_model
+from matplotlib.colors import LogNorm, LinearSegmentedColormap
+from PIL import Image
+from scipy.stats import skew
+from tqdm import tqdm
+/opt/conda/lib/python3.10/site-packages/scipy/__init__.py:146: UserWarning: A NumPy version >=1.16.5 and <1.23.0 is required for this version of SciPy (detected version 1.24.3
+  warnings.warn(f"A NumPy version >={np_minversion} and <{np_maxversion}"
+1.2 Downloading Data
+# Downloading files
+
+# Four categories 
+non_demented = []
+very_mild_demented = []
+mild_demented = []
+moderate_demented = []
+
+# Download per category
+for dirname, _, filenames in os.walk('/kaggle/input/imagesoasis/Data/Non Demented'):
+    for filename in filenames:
+        non_demented.append(os.path.join(dirname, filename))
+        
+for dirname, _, filenames in os.walk('/kaggle/input/imagesoasis/Data/Very mild Dementia'):
+    for filename in filenames:
+        very_mild_demented.append(os.path.join(dirname, filename))
+        
+for dirname, _, filenames in os.walk('/kaggle/input/imagesoasis/Data/Mild Dementia'):
+    for filename in filenames:
+        mild_demented.append(os.path.join(dirname, filename))
+        
+for dirname, _, filenames in os.walk('/kaggle/input/imagesoasis/Data/Moderate Dementia'):
+    for filename in filenames:
+        moderate_demented.append(os.path.join(dirname, filename))
+    
+# How many samples in each category: 
+print(len(non_demented))
+print(len(very_mild_demented))
+print(len(mild_demented))
+print(len(moderate_demented))
+67222
+13725
+5002
+488
+1.3 Visualizing Images
+Below we visualized example images for each class.
+
+# Function to display images with text indicating the category
+def display_images_with_text(file_paths, category_name, endings=['150', '151', '152']):
+    plt.figure(figsize=(15, 5))
+    plt.suptitle(f"Images from {category_name}", fontsize=16)
+
+    for ending in endings:
+        matching_files = [img for img in file_paths if img.endswith(ending + '.jpg')]
+        for i in range(min(3, len(matching_files))):
+            img_path = matching_files[i]
+            img = Image.open(img_path)
+            plt.subplot(1, 3, i + 1)
+            plt.imshow(img)
+            plt.axis('off')
+            
+            # Add text indicating the category
+            plt.text(0, -10, f"{category_name.split()[0]} {i + 1}", color='white', fontsize=12, weight='bold', ha='left', va='bottom', bbox=dict(facecolor='black', alpha=0.7))
+
+    plt.show()
+
+# Display images with text for each category
+display_images_with_text(non_demented, "Non Demented")
+display_images_with_text(very_mild_demented, "Very Mild Demented")
+display_images_with_text(mild_demented, "Mild Demented")
+display_images_with_text(moderate_demented, "Moderate Demented")
+
+
+
+
+2. Exploratory Data Analysis (EDA)
+We conducted an Exploratory Data Analysis (EDA) to see what our data looks like.
+
+2.1 Extracting Variables
+2.1.1 patient_id, mr_id, scan_id, layer_id
+This defines a regular expression pattern using re.compile.
+The pattern includes capturing groups for the patient_id, mr_id, scan_id, and layer_id.
+It attempts to match the pattern with the provided filename using pattern.match(filename).
+If there is a match, the function extracts the values from the capturing groups using match.group(n) where n is the group number.
+def get_info_from_filename(filename):
+    pattern = re.compile('OAS1_(\d+)_MR(\d+)_mpr-(\d+)_(\d+).jpg')
+    match = pattern.match(filename)
+    patient_id = match.group(1)
+    mr_id = match.group(2)
+    scan_id = match.group(3)
+    layer_id = match.group(4)
+
+    return patient_id, mr_id, scan_id, layer_id
+2.1.2 path, label, parient_id, mr_id, scan_id, layer_id
+The create_ref_df function takes a dataset_path as input, iterates through the files in the specified directory structure, extracts information from the filenames using the get_info_from_filename function, and creates a pandas DataFrame (ref_df) with columns for the path, label, patient_id, mr_id, scan_id, and layer_id.
+
+def create_ref_df(dataset_path):
+    paths, labels = [], []
+    patient_ids, mr_ids, scan_ids, layer_ids = [], [], [], []
+
+    # Iterate through folders in the dataset_path
+    for folder in os.listdir(dataset_path):
+        
+        # Iterate through files in each folder
+        for file in os.listdir(os.path.join(dataset_path, folder)):
+
+            # Extract information from the filename using get_info_from_filename function
+            patient_id, mr_id, scan_id, layer_id = get_info_from_filename(file)
+
+            # Append information to respective lists
+            paths.append(os.path.join(dataset_path, folder, file))
+            labels.append(folder)
+            patient_ids.append(patient_id)
+            mr_ids.append(mr_id)
+            scan_ids.append(scan_id)
+            layer_ids.append(layer_id)
+
+    # Create a DataFrame from the collected information
+    ref_df = pd.DataFrame({
+        'path': paths,
+        'label': labels,
+        'patient_id': patient_ids,
+        'mr_id': mr_ids,
+        'scan_id': scan_ids,
+        'layer_id': layer_ids
+    })
+
+    # Convert columns to appropriate data types
+    ref_df = ref_df.astype({
+        'path': 'string',
+        'label': 'string',
+        'patient_id': 'int64',
+        'mr_id': 'int64',
+        'scan_id': 'int64',
+        'layer_id': 'int64'
+    })
+
+    return ref_df
+# Applying the function defined above
+ref_df = create_ref_df('/kaggle/input/imagesoasis/Data')
+2.2 Loading Images with Labels and Paths
+def load_images(ref_df):
+    labels = []
+    images = []
+    paths = []
+
+    # Iterate through rows of the reference DataFrame
+    for idx, row in tqdm(ref_df.iterrows(), total=ref_df.shape[0]):
+        
+        # Load image using PIL and convert it to a grayscale numpy array
+        images.append(np.array(Image.open(row['path']).convert('L')))
+        
+        # Append label and path to respective lists
+        labels.append(row['label'])
+        paths.append(row['path'])
+    
+    # Return lists of images, labels, and paths
+    return images, labels, paths
+# Applying the function defined above
+images, labels, paths = load_images(ref_df)
+100%|██████████| 86437/86437 [08:02<00:00, 179.03it/s]
+2.3 Extracting Image Statistics
+The following statistics were extracted:
+
+mean: Mean pixel value of each image.
+std: Standard deviation of pixel values in each image.
+width: Width of each image.
+height: Height of each image.
+skew: Skewness of the histogram of pixel values in each image.
+def get_image_stats(images, labels, paths):
+    means, stds, widths, heights = [], [], [], []
+    skewnesses = []
+    
+    # Iterate through the images
+    for image in tqdm(images):
+        
+        # Calculate mean and standard deviation
+        means.append(np.mean(image))
+        stds.append(np.std(image))
+        
+        # Get image width and height
+        widths.append(image.shape[0])
+        heights.append(image.shape[1])
+        
+        # Calculate skewness of the image histogram
+        image_hist = np.histogram(image.flatten())[0]
+        skewnesses.append(skew(image_hist))
+    
+    # Create a DataFrame with image statistics
+    image_stats = pd.DataFrame({
+        'mean': means,
+        'std': stds,
+        'width': widths,
+        'height': heights,
+        'skew': skewnesses
+    })
+    
+    # Add labels and paths to the DataFrame
+    image_stats['label'] = labels
+    image_stats['path'] = paths
+    
+    return image_stats
+# Applying the function defined above
+image_stats = get_image_stats(images, labels, paths)
+100%|██████████| 86437/86437 [03:37<00:00, 397.49it/s]
+2.4 Label Distribution
+Below we plotted the distribution of the classes as a bar chart.
+
+# Defining class_names, frequencies
+frequencies = [len(non_demented),  len(very_mild_demented), len(moderate_demented), len(mild_demented),]
+class_names = ["non_demented", "very_mild_demented", "moderate_demented", "mild_demented"]
+
+# Sorting class_names and frequencies in descending order
+sorted_indices = np.argsort(frequencies)[::-1]
+class_names = np.array(class_names)[sorted_indices]
+frequencies = np.array(frequencies)[sorted_indices]
+
+# Navy blue gradient color palette with 4 distinct colors
+navy_blue_palette = LinearSegmentedColormap.from_list("navy_blue_palette", ["lightblue", "cornflowerblue", "royalblue", "navy"], N=4)
+
+# Bar plot with adjusted y-axis limits and navy blue gradient colors
+fig, ax = plt.subplots()
+bp = ax.barh(np.arange(len(class_names)), frequencies, color=navy_blue_palette(np.linspace(0, 1, len(class_names))))
+
+# Adjusted y-axis limits
+ax.set_ylim(-0.5, len(class_names)-0.5)
+
+# Class names as y-axis labels
+ax.set_yticks(np.arange(len(class_names)))
+ax.set_yticklabels(class_names)
+
+# Hide axes
+ax.axis('off')
+
+# Frequency values to the right of each bar with a reduced offset
+for i, frequency in enumerate(frequencies):
+    ax.text(frequency + 0.1, i, frequency, ha='left', va='center', rotation=-20)
+
+# Vertical line at 0 for clarity
+ax.axvline(x=0, linestyle='--', color='black')
+
+# Legend
+handles = [plt.Rectangle((0, 0), 1, 1, color=navy_blue_palette(i)) for i in range(4)]
+ax.legend(handles, class_names, loc="upper right", title="Classes")
+
+# Plot title
+plt.title("Observations per Class")
+
+plt.show()
+
+Here, a substantial class imbalance can be clearly seen, where certain classes significantly outnumber others (Non Demented >> Very mild Dementia > Mild Dementia >> Moderate Dementia). This imbalance poses challenges for convolutional neural networks, as they may become biased toward the majority class and struggle to effectively recognize and classify instances from the minority classes. Addressing this class imbalance is crucial for building a robust and unbiased model.
+
+Techniques such as oversampling the minority class, undersampling the majority class, or using advanced methods like Synthetic Minority Over-sampling Technique (SMOTE) can be employed to mitigate these challenges and enhance the model's performance on the underrepresented classes. We tried out several of these methods and finally chose for a mix of over- and undersampling (see 3.2).
+
+Additionally, careful consideration should be given to appropriate evaluation metrics that account for the class imbalance, such as precision, recall, and F1 score, rather than relying solely on accuracy (see 6).
+
+2.5 Mean, SD and Skewness of Images
+We visualized the mean, standard deviation and skewness of the images with boxplots.
+
+# Boxplot of image histogram Means
+px.box(image_stats, y='mean', x='label')
+# Boxplot of image histogram SDs
+px.box(image_stats, y='std', x='label')
+# Boxplot of image histogram Skewness
+px.box(image_stats, y='skew', x='label')
+Upon examining scatter plots and box charts, a notable trend emerges: as the severity of dementia increases, the statistical features such as mean, standard deviation, and skew of the images appear to cluster within a more confined range.
+
+Furthermore, there is an observable upward trend in skewness with increasing severity. While not definitive, these insights suggest that leveraging these statistical features could potentially serve to improve and expedite the training process of a deep learning model.
+
+3. Data Pre-Processing
+3.1 Splitting Off a Test Set
+Before we do any preprocessing, we split off a test set of images for each category so that we can evaluate the model on data that it has never seen before, and that we also did not tune the hyperparameters on. This will give a more accurate representation of our model's actual performance.
+
+# Set seed for random sampling
+random.seed(42)
+
+
+# Split off a test set for the moderate_demented class
+moderate_demented_train, moderate_demented_test = train_test_split(
+    moderate_demented, test_size=0.2, random_state=42
+)
+
+# Split off a test set for the mild_demented class
+mild_demented_train, mild_demented_test = train_test_split(
+    mild_demented, test_size=0.2, random_state=42
+)
+
+# Split off a test set for the very_mild_demented class
+very_mild_demented_train, very_mild_demented_test = train_test_split(
+    very_mild_demented, test_size=0.2, random_state=42
+)
+
+# Split off a test set for the non_demented class
+non_demented_train, non_demented_test = train_test_split(
+    non_demented, test_size=0.2, random_state=42
+)
+3.2 Handling Class Imbalance
+As mentioned in the introduction and visible in our ‘Observations per Class’ histogram, our dataset was extremely imbalanced, with the minority class being only 0.007% the size of the majority class. Although the dataset’s class proportions reflect current prevalence of Alzheimer’s per category (with more severe forms of the disease naturally being less frequent than no diagnosis), this was not ideal in terms of neural network training. Datasets with such high imbalance can result in misleading outputs such as high performance on the majority class but low on the minority class, and deceptive performance interpretations when using common performance metrics such as accuracy (as it is often not suited for class imbalance). To this end, researching ways of countering this was one of our initial priorities.
+
+The most problematic part of our case of class imbalance was the fact that we were working with medical brain scans. It is highly inadvisable to perform data augmentation through common techniques such as distortions, rotations, color changes, and even flips to medical data, as this could lead to potentially losing valuable information about brain structures along the way, and lead to erroneous diagnoses. Given the (medical) importance and implications of diagnosis, it would be too big a risk (and potentially unethical) to include such transformations to our data. Therefore, our ways of dealing with imbalance were quite limited, specifically in terms of augmentation.
+
+We initially looked into data augmentation using SMOTE, weighted classes, undersampling, oversampling, and a weighted loss function. SMOTE was not applicable to our dataset; subsequently we compared performance using weighted classes to performance using a combination of undersampling (of the majority classes) and oversampling (of the minority classes). The former yielded very poor accuracy (probably because a large weight is given to the minority class so small discrepencies become very influential) whereas the latter performed extremely well, and is what we have chosen for our final (highly performing) model. Given the poor performance of weighted classes and its technical difficulty we opted to not include weighted loss functions.
+
+Since oversampling involves resampling and using images from the dataset without changes (and hence using replicas of images to augment a class), before implementing it we split off a test set from each class’ raw data. This resulted in 98 images from the moderate class (20% of the 488 observations), and 640 images for the other 3 categories, to end up with 2000 images for the test set, which is 10% of the train sample size consisting of 20,000 images. It was not an issue that the test dataset was not proportional across classes, as it is appropriate for a test set to include a proportion that is closer to real-world occurrence of each class (in this case a lower incidence of “moderate” Alzheimer’s) rather than proportional for every class, as this will mirror more closely how the test fares for realistic diagnostic prediction. Then, with the remaining data, we undersampled from the two majority classes to obtain 5000 scans per class, and oversampled from the two minority classes to get 5000 images for each as well. We then performed an 80-20 train-validation split on this 20,000 image set, such that we had 16,000 images for training (4000 per class), and 4000 for validation (1000 per class). This is the data we used to train our model.
+
+3.2.1 Under-/Oversampling Train Data
+# Check number of train images per category
+print(len(non_demented_train))
+print(len(very_mild_demented_train))
+print(len(mild_demented_train))
+print(len(moderate_demented_train))
+53777
+10980
+4001
+390
+# Specify the target number of samples for each class
+target_samples = 5000
+
+# Oversample small classes
+moderate_demented_samp = random.choices(moderate_demented_train, k=target_samples)
+mild_demented_samp = random.choices(mild_demented_train, k=target_samples)
+
+# Undersample large classes
+very_mild_demented_samp = random.sample(very_mild_demented_train, k=target_samples)
+non_demented_samp = random.sample(non_demented_train, k=target_samples)
+# Check results
+print(len(non_demented_samp))
+print(len(very_mild_demented_samp))
+print(len(mild_demented_samp))
+print(len(moderate_demented_samp))
+5000
+5000
+5000
+5000
+3.2.2 Undersampling Test Data
+# Check the number of test images per category
+print(len(non_demented_test))
+print(len(very_mild_demented_test))
+print(len(mild_demented_test))
+print(len(moderate_demented_test))
+13445
+2745
+1001
+98
+# Specify the target number of samples for each class
+target_samples = 640
+
+# Undersample large classes
+mild_demented_test = random.sample(mild_demented_test, k=target_samples)
+very_mild_demented_test = random.sample(very_mild_demented_test, k=target_samples)
+non_demented_test = random.sample(non_demented_test, k=target_samples)
+3.3 Merging, Shaping, Splitting
+3.3.1 One-Hot Encoder
+We needed a function to one-hot encode the class labels.
+
+# One-hot encoder for class labels 
+encoder = OneHotEncoder()
+encoder.fit([[0],[1],[2],[3]])
+
+OneHotEncoder
+OneHotEncoder()
+3.3.2 Train Data
+We transformed the train images from each class into the preferred shape: 128x128x3. We choose 128 pixels to reduce computation time. The categories were merged together into the 'data' object. The class labels were transformed into the one-hot encoded format and stored into the 'result' object.
+
+After this, we splitted this data into a training set (80%) and a validation set (20%).
+
+# Empty objects to store the data and the class labels (result) in
+data = []
+result = []
+
+# Loop through each category and transform data and result into right format (128x128x3 & one-hot encoded) 
+# and merge categories together
+for path in non_demented_samp:
+    img = Image.open(path)
+    img = img.resize((128,128))
+    img = np.array(img)
+    if(img.shape == (128,128,3)):
+        data.append(np.array(img))
+        result.append(encoder.transform([[0]]).toarray())
+
+for path in very_mild_demented_samp:
+    img = Image.open(path)
+    img = img.resize((128,128))
+    img = np.array(img)
+    if(img.shape == (128,128,3)):
+        data.append(np.array(img))
+        result.append(encoder.transform([[1]]).toarray())
+        
+for path in mild_demented_samp:
+    img = Image.open(path)
+    img = img.resize((128,128))
+    img = np.array(img)
+    if(img.shape == (128,128,3)):
+        data.append(np.array(img))
+        result.append(encoder.transform([[2]]).toarray()) 
+        
+for path in moderate_demented_samp:
+    img = Image.open(path)
+    img = img.resize((128,128))
+    img = np.array(img)
+    if(img.shape == (128,128,3)):
+        data.append(np.array(img))
+        result.append(encoder.transform([[3]]).toarray())
+# Transform data to numpy array
+data = np.array(data)
+
+# Check shape
+data.shape
+(20000, 128, 128, 3)
+# Transform labels to numpy array
+result = np.array(result)
+
+# Reshape to the one-hot encoded format 
+result = result.reshape((data.shape[0],4)) 
+
+# Check shape 
+result.shape
+(20000, 4)
+# Split in validation and train data 
+x_train,x_val,y_train,y_val = train_test_split(data,result, test_size=0.20, shuffle=True, random_state=42)
+3.3.3 Test Data
+Also for the test data, we transformed the images from each class into the preferred shape (128x128x3) and merged the categories together into the 'data_test' object. Again, the class labels were transformed into the one-hot encoded format and stored into the 'result_test' object.
+
+### Transforming the data into the right shape (128x128x3), merge and encode it 
+
+data_test = []
+result_test = []
+
+for path in non_demented_test:
+    img = Image.open(path)
+    img = img.resize((128,128))
+    img = np.array(img)
+    if(img.shape == (128,128,3)):
+        data_test.append(np.array(img))
+        result_test.append(encoder.transform([[0]]).toarray())
+        
+for path in very_mild_demented_test:
+    img = Image.open(path)
+    img = img.resize((128,128))
+    img = np.array(img)
+    if(img.shape == (128,128,3)):
+        data_test.append(np.array(img))
+        result_test.append(encoder.transform([[1]]).toarray())
+        
+for path in mild_demented_test:
+    img = Image.open(path)
+    img = img.resize((128,128))
+    img = np.array(img)
+    if(img.shape == (128,128,3)):
+        data_test.append(np.array(img))
+        result_test.append(encoder.transform([[2]]).toarray()) 
+        
+for path in moderate_demented_test:
+    img = Image.open(path)
+    img = img.resize((128,128))
+    img = np.array(img)
+    if(img.shape == (128,128,3)):
+        data_test.append(np.array(img))
+        result_test.append(encoder.transform([[3]]).toarray())
+# Transform data to numpy array
+data_test = np.array(data_test)
+data_test.shape
+(2018, 128, 128, 3)
+# Transform labels to numpy array
+result_test = np.array(result_test)
+result_test = result_test.reshape((data_test.shape[0],4)) 
+result_test.shape
+(2018, 4)
+We changed the names of 'data_test' to 'x_test' and 'result_test' to 'y_test' for the sake of consistency.
+
+# Change names to x_test and y_test 
+x_test = data_test
+y_test = result_test
+The data pre-processing thus resulted in the following data objects:
+
+x_train: train data
+y_train: train labels
+x_val: validation data (used in training/modeling)
+y_val: validation labels (used in training/modeling)
+x_test: test data (evaluation after modeling)
+y_test: test labels (evaluation after modeling)
+4. Modeling
+Because our task involved classifying MRI images into four ordinal categories, we adopted a Convolutional Neural Network specifically designed for ordinal classification. We then compared this model to a CNN for 'regular' classification, to see if the ordinality in the data is better represented by an ordinal classifier CNN.
+
+4.1 Ordinal vs. Regular Classification
+Thus, in our data the classes have a meaningful order. To keep this information in tact, it is typically recommended to use a loss function that is specifically designed for this, and (optionally) adding a special output layer to the model. We tried several custom loss functions and output layers, such as a bias layer - in which the last layer shares its weights but has different biases - or a CORAL (consistent rank logits) layer (Cao et al., 2019). Unfortunately, much of these did not work for our specific data set and task, or resulted in extremely low performance. Hence, we instead opted for encoding the class labels as integers representing the ordinal classes (0: non-demented; 1: very mild demented; 2: mild demented; 3: moderate demented) instead of one-hot encoded vectors, as is done in regular classification where there is no natural order in the classes. This way, the ordinal information in the labels is maintained, i.e., class 2 (mild demented) is 'more demented' than class 1 (very mild demented). Additionally, we used a sparse categorical crossentropy as a loss function, which computes the crossentropy between the predicted probability distribution and the true integer labels. This is opposed to a 'regular' categorical crossentropy used in regular classification, which takes in one-hot encoded class labels.
+
+# Convert labels to integers
+y_train_int = np.argmax(y_train, axis=1)
+y_val_int = np.argmax(y_val, axis=1)
+4.2 Model Architecture
+We tried several models to classify the MRI images into the four categories. Amongst others, we experimented with: using different pre-trained bases, adding several additional layers, defining our own architecture ("basic" model), using combinations of pre-trained bases and basic models, etc. Of these models, the best performing ones can be found in the appendix (basic model, EfficientNetV2B1 model, combinations of pretrained bases and the basic model). In the end, the model with an EfficientNetB0 pre-trained base performed best.
+
+Pre-trained bases are commonly used in transfer learning, where a model trained on one task is adapted for a different but related task. This model can be fine-tuned on the target task's new dataset. In this case, the final model's base (EfficientNetB0) has been trained on the ImageNet dataset. The ImageNet dataset has millions of labelled images across thousands of categories, widely used across different computer vision problems. EfficientNet, with its innovative approach to model scaling, achieved state-of-the-art performance on ImageNet and demonstrated superior efficiency in terms of accuracy vs. computational cost compared to earlier architectures (e.g., DenseNet, ResNet, etc.) (Mingxing & Quoc V, 2020).
+
+After implementing the EfficientNetB0 pre-trained base, we fine-tuned the model to update the weights of the entire network using our Alzheimer's dataset. In this case, we have decided to unfreeze these weights, so that the architecture can learn its weights based on our dataset, which makes sense theoretically, given the original dataset EfficientNet has been trained on and is not fully suited for our specialized task. Surprisingly, the performance difference between unfreezing and freezing the weights was not that high, but given the future adaptability of our model, we still decided to unfreeze the weights, which makes the most sense theoretically as well. Additionally, the number of parameters in this base (5.3M) is significantly lower than any other widely available pre-trained models (e.g., DenseNet201 with 20.2M parameters and 93.6% top-5 accuracy; ResNet152V2 with 60.4M parameters and 94.2% top-5 accuracy), therefore, as its name also indicates, it's really efficient and can give high accuracy, especially in multi-class classification tasks (93.3% top-5 accuracy; Team, 2023).
+
+EfficientNet uses compound scaling, which balances the model's depth, width and resolution to uniformly scale the model in all dimensions and to achieve optimal performance across different scales, as opposed to other single-dimension scaling methods. This helps the base to achieve a balance between model size and computational efficiency across a wide range of resource constraints and shows up to 2.5% improvement in accuracy compared to other single-dimension scaling methods (Mingxing & Quoc V, 2020).
+
+The hyperparameters of this model were tuned to be optimal (see 4.3). The resulting values are implemented in the model's architecture, optimization and training.
+
+# Load the pre-trained EfficientNetB0 model without top (classification) layers
+pretrained_base_EfficientNetB0 = EfficientNetB0(weights='imagenet', include_top=False, input_shape=(128, 128, 3))
+
+# Make the weights of the pretrained base trainable ("unfreeze")
+pretrained_base_EfficientNetB0.trainable = True
+
+# Create a custom model on top of the pre-trained base
+model_EfficientNetB0 = models.Sequential([
+    pretrained_base_EfficientNetB0,
+    layers.BatchNormalization(),
+    layers.GlobalAveragePooling2D(), # reduces feature maps to a single value, so no additional 'flatten' layer needed (also reduces the nr of parameters)
+    layers.Dense(512, activation='relu'),
+    layers.Dropout(0.5),
+    layers.Dense(4, activation='softmax')
+])
+
+# Summary of the model
+model_EfficientNetB0.summary()
+Downloading data from https://storage.googleapis.com/keras-applications/efficientnetb0_notop.h5
+16705208/16705208 [==============================] - 0s 0us/step
+Model: "sequential"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ efficientnetb0 (Functional  (None, 4, 4, 1280)        4049571   
+ )                                                               
+                                                                 
+ batch_normalization (Batch  (None, 4, 4, 1280)        5120      
+ Normalization)                                                  
+                                                                 
+ global_average_pooling2d (  (None, 1280)              0         
+ GlobalAveragePooling2D)                                         
+                                                                 
+ dense (Dense)               (None, 512)               655872    
+                                                                 
+ dropout (Dropout)           (None, 512)               0         
+                                                                 
+ dense_1 (Dense)             (None, 4)                 2052      
+                                                                 
+=================================================================
+Total params: 4712615 (17.98 MB)
+Trainable params: 4668032 (17.81 MB)
+Non-trainable params: 44583 (174.16 KB)
+_________________________________________________________________
+4.3 Hyperparameter Tuning
+To tune the hyperparameters, we performed a grid search for the optimal number of hidden units, dropout rate, learning rate and batch size. Because of our primary focus on ordinal classification, the compiling and training was specifically designed for this (see 4.4).
+
+Hidden units: A large number of hidden units allows the model to learn complex relationships in the data, at the risk of overfitting with a small dataset (though with our 20k images, that shouldn't be a problem). A small number of hidden units on the other hand reduces computation time and there is a lower chance of overfitting. However, complex relationships might not be captured with fewer units.
+Dropout rate: Dropout regularizes the model, with larger values adding more regularization and resulting in a smaller chance of overfitting. However, higher dropout rates may result in less learning. Contrastingly, smaller dropout rates add less regularlization and increase the chance of overfitting, but might lead to more learning.
+Learning rate: A learning rate results in faster convergence, at the risk of overshooting the optimal weights. Whereas a lower learning rate leads to slower but more stable convergence, at the risk of getting stuck in local minima.
+Batch size: A larger batch size speeds up training, but it does require more memory and potentially results in limited generalization. A smaller batch size on the other hand may lead to better generalization and requires less memory, but it slows down training.
+Unfortunately, we could not tune these parameters all at the same time, because of memory issues (even with only 10% of the data). Hence we decided to perform the grid search for the number of hidden units and the dropout rate first, because these are parameters within the model's architecture and make the model more or less complex. After this, we tuned the learning rate and batch size - parameters that influence the optimization process.
+
+Here is the code that was used for hyperparameter tuning. We put it in markdown because it takes a long time to run, and the resulting parameter values are already in our model.
+
+# Use integer labels: y_train_int & y_val_int
+
+# Define a function to create the model
+
+def create_model(hidden_units=256, dropout_rate=0.5, learning_rate=0.001):`
+
+    model = Sequential([`
+        pretrained_base_EfficientNetB0,
+        BatchNormalization(),
+        GlobalAveragePooling2D(),
+        Dense(hidden_units, activation='relu'),
+        Dropout(dropout_rate),
+        Dense(4, activation='softmax')
+    ])
+
+    # Train the pretrained base
+    model.layers[0].trainable = True
+
+    optimizer = Adam(learning_rate=learning_rate)
+
+    model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    return model`
+
+
+# Specify values for grid search
+
+hidden_units_values = [128, 256, 512]
+dropout_rate_values = [0.3, 0.5, 0.7]
+learning_rate_values = [0.001, 0.01, 0.1]
+batch_size_values = [16, 32, 64]
+
+
+# 1: Tune dropout rate and hidden units
+
+best_accuracy = 0
+best_params = {}
+
+for hidden_units in hidden_units_values:
+    for dropout_rate in dropout_rate_values:
+        # Create model
+        model = create_model(hidden_units=hidden_units, dropout_rate=dropout_rate)
+
+        # Train model
+        history = model.fit(x_train, y_train_int, epochs=5, batch_size=32, # 5 epochs to reduce computation time
+                        validation_data=(x_val, y_val_int))
+
+        # Evaluate model on validation set
+        accuracy = model.evaluate(x_val, y_val_int)[1]
+
+        # Print or store the results
+        print(f'Hidden Units: {hidden_units}, Dropout Rate: {dropout_rate}, Accuracy: {accuracy}')
+
+        # Update best parameters if needed
+        if accuracy > best_accuracy:
+            best_accuracy = accuracy
+            best_params = {'hidden_units': hidden_units, 'dropout_rate': dropout_rate}
+
+# Print the best hyperparameters
+
+print(f'Best Hyperparameters: {best_params}')
+
+
+# 2: Tune batch size and learning rate
+
+best_accuracy_2 = 0
+best_params_2 = {}
+
+for learning_rate in learning_rate_values:
+    for batch_size in batch_size_values:
+        # Create model
+        model = create_model(hidden_units=best_params_2['hidden_units'], dropout_rate=best_params_2['dropout_rate'],
+        learning_rate=learning_rate)
+
+        # Train model
+        history = model.fit(x_train, y_train_int, epochs=5, batch_size=batch_size, 
+                        validation_data=(x_val, y_val_int))
+
+        # Evaluate model on validation set
+        accuracy = model.evaluate(x_val, y_val_int)[1]
+
+        # Print or store the results
+        print(f'Learning Rate: {learning_rate}, Batch Size: {batch_size}, Accuracy: {accuracy}')
+
+        # Update best parameters if needed
+        if accuracy > best_accuracy_2:
+            best_accuracy_2 = accuracy
+            best_params_2.update({'learning_rate': learning_rate, 'batch_size': batch_size})
+
+# Print the best hyperparameters
+
+print(f'Best Hyperparameters: {best_params_2}')
+The following values resulted from this, and were implemented in the model's architecture (4.2) and optimization (4.4):
+
+Hidden units: 512
+Dropout rate: 0.5
+Learning rate: 0.001
+Batch size: 16
+4.4 Training: Ordinal Classification
+First, we optimized and trained the model for ordinal classification (which involved predicting integer labels and deploying sparse crossentropy loss). We used accuracy as a performance metric, which is valid because there is no more class imbalance (see 6 for other metrics). We also included an early stopping callback, which makes the model quit training when the validation loss stops improving, thereby avoiding training for too many epochs which could lead to overfitting. We set the patience to 5, meaning that training will stop if there is no improvement in validation loss for 5 consecutive epochs. The minimum delta value is set to 0.0001, which is the minimum change in validation loss to qualify as improvement.
+
+# Use integer labels: y_train_int & y_val_int
+
+# Adam optimizer with learning rate 0.001
+optimizer = Adam(learning_rate=0.001)
+
+# Compile the model
+model_EfficientNetB0.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+
+# Define early stopping callback
+early_stopping = EarlyStopping(monitor='val_loss', patience=5, min_delta=0.0001, restore_best_weights=True)
+
+# Train the model with early stopping
+history_EfficientNetB0 = model_EfficientNetB0.fit(x_train, y_train_int, epochs=50, batch_size=16,
+                                                  verbose=1, validation_data=(x_val, y_val_int), callbacks=[early_stopping])
+Epoch 1/50
+2023-12-23 19:30:13.765278: E tensorflow/core/grappler/optimizers/meta_optimizer.cc:954] layout failed: INVALID_ARGUMENT: Size of values 0 does not match size of permutation 4 @ fanin shape insequential/efficientnetb0/block2b_drop/dropout/SelectV2-2-TransposeNHWCToNCHW-LayoutOptimizer
+1000/1000 [==============================] - 93s 49ms/step - loss: 0.4857 - accuracy: 0.8111 - val_loss: 0.4237 - val_accuracy: 0.8735
+Epoch 2/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.2337 - accuracy: 0.9188 - val_loss: 0.3822 - val_accuracy: 0.8773
+Epoch 3/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.1469 - accuracy: 0.9500 - val_loss: 0.3117 - val_accuracy: 0.8997
+Epoch 4/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.1170 - accuracy: 0.9599 - val_loss: 0.2646 - val_accuracy: 0.9435
+Epoch 5/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0964 - accuracy: 0.9662 - val_loss: 0.0530 - val_accuracy: 0.9820
+Epoch 6/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0690 - accuracy: 0.9778 - val_loss: 0.0657 - val_accuracy: 0.9747
+Epoch 7/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0827 - accuracy: 0.9732 - val_loss: 0.0590 - val_accuracy: 0.9768
+Epoch 8/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0658 - accuracy: 0.9804 - val_loss: 0.1296 - val_accuracy: 0.9535
+Epoch 9/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0530 - accuracy: 0.9824 - val_loss: 0.1690 - val_accuracy: 0.9597
+Epoch 10/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0499 - accuracy: 0.9846 - val_loss: 0.1169 - val_accuracy: 0.9595
+4.5 Training: Regular Classification
+As explained, to see if the model that is specifically trained for ordinal classification performs better, we compared it to the training of the model for regular classification. For this we used the same architecture and performance metric (accuracy), but with 'regular' categorical crossentropy as loss function and the labels as one-hot vectors. Again, we used early stopping to prevent overfitting.
+
+# Store model architecture in new object, to prevent confusion (e.g. with compiling, training and calculating test accuracy later)
+# By cloning the model
+model_EfficientNetB0_rc = clone_model(model_EfficientNetB0)
+
+# Adam optimizer with learning rate 0.001
+optimizer = Adam(learning_rate=0.001)
+
+# Compile with ('regular') categorical_crossentropy 
+model_EfficientNetB0_rc.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
+
+# Define early stopping callback
+early_stopping = EarlyStopping(monitor='val_loss', patience=5, min_delta=0.0001, restore_best_weights=True)
+
+# Train
+history_EfficientNetB0_rc = model_EfficientNetB0_rc.fit(x_train, y_train, epochs=50, batch_size=16, 
+                                                       verbose=1, validation_data=(x_val, y_val), callbacks=[early_stopping])
+Epoch 1/50
+2023-12-23 19:38:49.814032: E tensorflow/core/grappler/optimizers/meta_optimizer.cc:954] layout failed: INVALID_ARGUMENT: Size of values 0 does not match size of permutation 4 @ fanin shape insequential/efficientnetb0/block2b_drop/dropout/SelectV2-2-TransposeNHWCToNCHW-LayoutOptimizer
+1000/1000 [==============================] - 84s 48ms/step - loss: 0.8355 - accuracy: 0.6621 - val_loss: 0.5619 - val_accuracy: 0.7707
+Epoch 2/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.3335 - accuracy: 0.8758 - val_loss: 0.2915 - val_accuracy: 0.9030
+Epoch 3/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.2319 - accuracy: 0.9158 - val_loss: 0.1287 - val_accuracy: 0.9505
+Epoch 4/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.1822 - accuracy: 0.9389 - val_loss: 0.1499 - val_accuracy: 0.9427
+Epoch 5/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.1383 - accuracy: 0.9534 - val_loss: 0.1702 - val_accuracy: 0.9515
+Epoch 6/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.1392 - accuracy: 0.9541 - val_loss: 0.1010 - val_accuracy: 0.9682
+Epoch 7/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0996 - accuracy: 0.9679 - val_loss: 0.1414 - val_accuracy: 0.9457
+Epoch 8/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.1254 - accuracy: 0.9609 - val_loss: 0.0797 - val_accuracy: 0.9740
+Epoch 9/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0645 - accuracy: 0.9801 - val_loss: 0.1169 - val_accuracy: 0.9628
+Epoch 10/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0774 - accuracy: 0.9760 - val_loss: 0.1186 - val_accuracy: 0.9570
+Epoch 11/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0757 - accuracy: 0.9766 - val_loss: 0.0727 - val_accuracy: 0.9785
+Epoch 12/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0606 - accuracy: 0.9822 - val_loss: 0.0542 - val_accuracy: 0.9827
+Epoch 13/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0533 - accuracy: 0.9856 - val_loss: 0.0818 - val_accuracy: 0.9718
+Epoch 14/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0487 - accuracy: 0.9866 - val_loss: 0.1424 - val_accuracy: 0.9582
+Epoch 15/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0536 - accuracy: 0.9832 - val_loss: 0.0780 - val_accuracy: 0.9768
+Epoch 16/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0487 - accuracy: 0.9860 - val_loss: 0.0620 - val_accuracy: 0.9810
+Epoch 17/50
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0415 - accuracy: 0.9877 - val_loss: 0.0773 - val_accuracy: 0.9780
+Results
+To examine the performance of our model and compare ordinal with regular classification, we calculated several performance metrics on the validation and test data.
+
+5. Results on Train and Validation Data
+To have a first glance at the model's performance, we plotted the loss and accuracy of the validation data and inspected the convergence, for both the ordinal and regular classification.
+
+5.1 Loss & Accuracy Ordinal Classification
+# Loss & accuracy of ordinal model 
+history_EfficientNetB0_frame = pd.DataFrame(history_EfficientNetB0.history)
+history_EfficientNetB0_frame.loc[:, ['loss', 'val_loss']].plot()
+history_EfficientNetB0_frame.loc[:, ['accuracy', 'val_accuracy']].plot()
+<Axes: >
+
+
+5.2 Loss & Accuracy Regular Classification
+# Loss & accuracy of regular model 
+history_EfficientNetB0_rc_frame = pd.DataFrame(history_EfficientNetB0_rc.history)
+history_EfficientNetB0_rc_frame.loc[:, ['loss', 'val_loss']].plot()
+history_EfficientNetB0_rc_frame.loc[:, ['accuracy', 'val_accuracy']].plot()
+<Axes: >
+
+
+6. Results on Test Data: Ordinal Classification
+We also investigated the model's performance on data that it has never seen before and wasn't tuned on: the test dataset. We used accuracy and loss, which are valid measures because the class imbalance was taken care of. Nevertheless, to be able to be more confident about the results, we calculated other metrics as well, including a measure that is presumably the most optimal for ordinal classification (Scott's pi; Yilmaz & Demirhan, 2023; see 6.5).
+
+Accuracy
+Loss
+Confusion matrix (log scale)
+F1 score
+Precision
+Recall
+ROC-AUC
+Scott's pi
+6.1 Accuracy & Loss
+We calculated the accuracy and loss scores of the model trained for ordinal classification.
+
+# Convert true test labels to integers
+y_test_int = np.argmax(y_test, axis=1)
+
+# Evaluate on test set 
+testeval = model_EfficientNetB0.evaluate(x_test, y_test_int, verbose=2)
+
+# Print performance metrics (loss and accuracy)
+print("Test Loss:", testeval[0])
+print("Test Accuracy:", testeval[1])
+64/64 - 4s - loss: 0.0709 - accuracy: 0.9782 - 4s/epoch - 61ms/step
+Test Loss: 0.0708712562918663
+Test Accuracy: 0.9781962633132935
+6.2 Confusion Matrix (Log Scale)
+We examined the confusion matrix to have a look at the true and false positives and negatives. Confusion matrices help identify specific areas in which the model may perform worse. Using a log scale makes it easier to spot these areas. (See 8. Robustness Analysis for an elaboration.)
+
+# Use integer test labels: y_test_int
+
+# Convert predicted labels to integers 
+y_pred_int = np.argmax(model_EfficientNetB0.predict(x_test), axis=1)
+
+# Create confusion matrix
+cm = confusion_matrix(y_test_int, y_pred_int)
+
+# Plot confusion matrix on log scale
+plt.figure(figsize=(8, 6))
+plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues, norm=LogNorm())
+plt.title('Confusion Matrix (Log Scale)')
+plt.colorbar()
+classes = np.unique(y_test_int)
+tick_marks = np.arange(len(classes))
+plt.xticks(tick_marks, classes, rotation=45)
+plt.yticks(tick_marks, classes)
+
+plt.ylabel('True label')
+plt.xlabel('Predicted label')
+plt.show()
+64/64 [==============================] - 3s 16ms/step
+
+6.3 F1 Score, Precision, Recall
+To examine the model's performance we computed a precision, recall and F1 score. These metrics are more nuanced than accuracy, because they take into account positive as well negative predictions.
+
+Precision measures the accuracy of positive predictions. It focusses on higher-ranked categories.
+Recall measures the true positive rate and is analogous to sensitivity. It focusses on lower-ranked categories.
+F1 score combines precison and recall. It focusses on false positives and false negatives.
+The F1 score, precision and recall are all metrics that are originally designed for a binarity setting, but they can easily be translated to a multiclass setting and to ordinal classification. This is done by first considering each class individually, and then computing a micro-average, in which one simply computes the average of the individual class scores. The micro-average method assigns equal weight to each class, treating the problem as a binary classification problem for each class. This is the most optimal method for our task because there is no more class imbalance due to resampling (as compared to a weighted average or macro-average which are more suitable for imbalanced data). Additionally, we are interested in overall performance and want to treat the problem as a whole.
+
+# Predicted integer labels: y_pred_int
+
+# One-hot encode the predicted labels
+y_pred_one_hot = to_categorical(y_pred_int, num_classes=4)
+
+# True labels one hot encoded: y_test
+
+# True labels integers: y_test_int
+
+# Calculate precision, recall, and F1 score per class --> uses integers
+precision, recall, f1, _ = precision_recall_fscore_support(y_test_int, y_pred_int, average=None)
+
+# Print precision, recall, and F1 score for each class
+for i, (p, r, f) in enumerate(zip(precision, recall, f1)):
+    print(f'Class {i}: Precision = {p:.4f}, Recall = {r:.4f}, F1 Score = {f:.4f}')
+    
+# Calculate micro-averages --> uses one hot encoded labels
+micro_precision, micro_recall, micro_f1, _ = precision_recall_fscore_support(y_test, y_pred_one_hot, average='micro')
+
+# Print precision, recall and F1 score micro average
+print("Micro-average Precision:", round(micro_precision, 4))
+print("Micro-average Recall:", round(micro_recall, 4))
+print("Micro-average F1 Score:", round(micro_f1, 4))
+Class 0: Precision = 0.9673, Recall = 0.9703, F1 Score = 0.9688
+Class 1: Precision = 0.9809, Recall = 0.9641, F1 Score = 0.9724
+Class 2: Precision = 0.9831, Recall = 0.9969, F1 Score = 0.9899
+Class 3: Precision = 1.0000, Recall = 1.0000, F1 Score = 1.0000
+Micro-average Precision: 0.9782
+Micro-average Recall: 0.9782
+Micro-average F1 Score: 0.9782
+6.4 ROC-AUC score
+The ROC-AUC score was also calculated. ROC-AUC is also designed for a binary classification setting, but again can be easily translated to a multiclass (ordinal) setting by computing the score per class and calculating the micro-average. The ROC-AUC indicates the model's overall performance and considers the true positive and false positive rate.
+
+# True labels: y_test
+
+# Predicted probability scores for each class
+y_probs = model_EfficientNetB0.predict(x_test)
+
+# Calculate ROC AUC per class
+roc_auc_per_class = roc_auc_score(y_test, y_probs, multi_class='ovr', average=None)
+
+# Print ROC AUC for each class
+for i, auc in enumerate(roc_auc_per_class):
+    print(f'Class {i}: ROC AUC = {auc:.4f}')
+
+# Calculate micro-average ROC AUC
+roc_auc_micro = roc_auc_score(y_test, y_probs, multi_class='ovr', average='micro')
+
+# Print
+print("Micro-average ROC AUC:", round(roc_auc_micro, 4))
+64/64 [==============================] - 1s 16ms/step
+Class 0: ROC AUC = 0.9966
+Class 1: ROC AUC = 0.9977
+Class 2: ROC AUC = 0.9997
+Class 3: ROC AUC = 1.0000
+Micro-average ROC AUC: 0.9988
+6.5 Scott's Pi
+Lastly, Scott's pi was computed as a measure of test performance. This was done because the other metrics - even though they were adapted for ordinal classification by calculating scores per class and computing the micro-average - may not fully capture the ordinal relationship between the classes. According to a study done by Yilmaz and Demirhan (2023) in which several performance measures for ordinal classification were compared, Scott's pi is best to use for these kind of tasks. It is originally a measure for inter-rater reliability, but it is also very suitable for ordinal tasks like ours because it considers the ordinality of the data. Scott's pi is interpreted in the same manner as accuracy, with scores closer to 1 indicating good performance (Yilmaz & Demirhan, 2023).
+
+# Scott's pi function
+def scotts_pi(confusion_matrix):
+    total = np.sum(confusion_matrix)
+    observed_agreement = np.trace(confusion_matrix)
+    
+    row_totals = np.sum(confusion_matrix, axis=1)
+    col_totals = np.sum(confusion_matrix, axis=0)
+    
+    expected_agreement = np.sum((row_totals * col_totals) / total)
+    
+    pe = expected_agreement / total
+    pi = (observed_agreement - expected_agreement) / (total - expected_agreement)
+    
+    return pi
+
+
+# True integer labels: y_test_int
+y_test_int = np.argmax(y_test, axis=1)
+
+# Predicted integer labels: y_pred_int
+
+# Calculate confusion matrix
+conf_matrix = confusion_matrix(y_test_int, y_pred_int)
+
+# Calculate Scott's Pi
+pi = scotts_pi(conf_matrix)
+print("Scott's Pi:", pi)
+Scott's Pi: 0.9686681345980126
+7. Results on Test Data: Regular Classification
+The aforementioned metrics were also calculated for the regular classification model, to compare it with the results from the ordinal clasification model.
+
+Please note that for some of these metrics, integer labels instead of one-hot encoded ones had to be used.
+
+7.1 Accuracy & Loss
+# Evaluate on test set 
+testeval = model_EfficientNetB0_rc.evaluate(x_test, y_test, verbose=2)
+
+# Print performance metrics (loss and accuracy)
+print("Test Loss:", testeval[0])
+print("Test Accuracy:", testeval[1])
+64/64 - 3s - loss: 0.0549 - accuracy: 0.9846 - 3s/epoch - 40ms/step
+Test Loss: 0.05486303195357323
+Test Accuracy: 0.9846382737159729
+7.2 Confusion Matrix (Log Scale)
+# Predicted labels, convert to integer: 
+y_pred_rc_int = np.argmax(model_EfficientNetB0_rc.predict(x_test), axis=1)
+
+# True integer labels: y_test_int
+
+# Create confusion matrix
+cm = confusion_matrix(y_test_int, y_pred_rc_int)
+
+# Plot confusion matrix on log scale
+plt.figure(figsize=(8, 6))
+plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues, norm=LogNorm())
+plt.title('Confusion Matrix (Log Scale)')
+plt.colorbar()
+classes = np.unique(y_test)
+tick_marks = np.arange(len(classes))
+plt.xticks(tick_marks, classes, rotation=45)
+plt.yticks(tick_marks, classes)
+
+plt.ylabel('True label')
+plt.xlabel('Predicted label')
+plt.show()
+64/64 [==============================] - 2s 16ms/step
+
+7.3 F1 Score, Precision, Recall
+# Predicted integer labels: y_pred_rc_int
+
+# One-hot encode the predicted labels
+y_pred_rc = to_categorical(y_pred_rc_int, num_classes=4)
+
+# True labels one hot encoded: y_test
+
+# True integer labels: y_test_int
+
+# Calculate precision, recall, and F1 score per class (uses integers)
+precision, recall, f1, _ = precision_recall_fscore_support(y_test_int, y_pred_rc_int, average=None)
+
+# Print precision, recall, and F1 score for each class
+for i, (p, r, f) in enumerate(zip(precision, recall, f1)):
+    print(f'Class {i}: Precision = {p:.4f}, Recall = {r:.4f}, F1 Score = {f:.4f}')
+    
+# Calculate micro-averages (uses one hot encoded labels)
+micro_precision, micro_recall, micro_f1, _ = precision_recall_fscore_support(y_test, y_pred_rc, average='micro')
+
+# Print precision, recall and F1 score micro average
+print("Micro-average Precision:", round(micro_precision, 4))
+print("Micro-average Recall:", round(micro_recall, 4))
+print("Micro-average F1 Score:", round(micro_f1, 4))
+Class 0: Precision = 0.9857, Recall = 0.9703, F1 Score = 0.9780
+Class 1: Precision = 0.9708, Recall = 0.9859, F1 Score = 0.9783
+Class 2: Precision = 0.9953, Recall = 0.9953, F1 Score = 0.9953
+Class 3: Precision = 1.0000, Recall = 1.0000, F1 Score = 1.0000
+Micro-average Precision: 0.9846
+Micro-average Recall: 0.9846
+Micro-average F1 Score: 0.9846
+7.4 ROC-AUC Score
+# True labels: y_test
+
+# Predicted probability scores for each class
+y_probs_rc = model_EfficientNetB0_rc.predict(x_test)
+
+# Calculate ROC AUC per class
+roc_auc_per_class = roc_auc_score(y_test, y_probs_rc, multi_class='ovr', average=None)
+
+# Print ROC AUC for each class
+for i, auc in enumerate(roc_auc_per_class):
+    print(f'Class {i}: ROC AUC = {auc:.4f}')
+
+# Calculate micro-average ROC AUC
+roc_auc_micro = roc_auc_score(y_test, y_probs_rc, multi_class='ovr', average='micro')
+
+# Print
+print("Micro-average ROC AUC:", round(roc_auc_micro, 4))
+64/64 [==============================] - 1s 16ms/step
+Class 0: ROC AUC = 0.9971
+Class 1: ROC AUC = 0.9977
+Class 2: ROC AUC = 0.9999
+Class 3: ROC AUC = 1.0000
+Micro-average ROC AUC: 0.999
+7.5 Scott's Pi
+Although Scott's pi is a performance measure best suitable for ordinal classification (Yilmaz & Demirhan, 2023), we also calculated it on our regular classification model.
+
+# Scott's pi function: scotts_pi
+
+# Predicted integer labels: y_pred_rc_int
+
+# True integer labels: y_test_int
+
+# Create confusion matrix
+conf_matrix = confusion_matrix(y_test_int, y_pred_rc_int)
+
+# Calculate Scott's Pi
+pi = scotts_pi(conf_matrix)
+print("Scott's Pi:", pi)
+Scott's Pi: 0.9779252766485999
+8. Robustness Analysis
+Aside from using various performance metrics, our robustness analysis is performed in a more qualitative than quantitative way, because of a few limitations. Given how specific our data was (MRI brain scans along the z-axis of Alzheimer’s patients divided into four categories from none to moderate), we can assume our model would most likely not be useful in predicting anything other than Alzheimer’s using z-axis scans. We tried to obtain other such images (keeping in mind the specific brain axis used) but none were available to the online public other than the dataset we have built our model on. It is also worth considering that medical scans of this sort are much harder to come by, partly because the incidence of disease is not always high enough for widespread use online, partly because these scans involve longitudinal studies making use of resources and high expenses, and partly because of patient and hospital privacy concerns.
+
+Despite the very high accuracy of our model (98%), we can still inspect the confusion matrix (see 6.2 & 7.2). By looking at the diagonal (true positives), we can observe that class 3 (out of the four classes coded 0-3) was a little bit less accurate than the other three classes (as shown by a slightly lighter blue). This makes sense, as this was the “moderate” class, so our problematic minority class. Moreover, we see that the model occasionally slightly confuses class 0 with class 1, and vice versa. This also makes sense, as class 0 is ‘non-demented’, and class 1 is ‘very mild’, meaning that the two categories are consecutive, and hence that the brains of people with very mild Alzheimer’s may not look very different from the brains of people without the disease.
+
+Given that a published SCNN using regular classification achieved a similar accuracy as ours using the same dataset (OASIS), it is fair to assume that, given the data available, our model is robust. Limitations of the model itself (also given the data we used) are discussed in the conclusion.
+
+9. Performance Metrics for All Models
+Below we made a table of the loss, accuracy and Scott's pi of all of our models on the test data, so also the models that are in the appendix. (The numbers might fluctuate between runs, that is why we put the numbers in manually from the same run).
+
+# Models, metrics and values 
+data = [
+    ["EfficientNetV2B1", "Ordinal", 0.0635298490524292, 0.9821605682373047, 0.9743746393303149],
+    ["", "Regular", 0.1096857488155365, 0.9618434309959412, 0.9451797201726465],
+    ["Basic", "Ordinal", 0.06547190994024277, 0.9727452993392944, 0.9608351682475158],
+    ["", "Regular", 0.11487357318401337, 0.9568880200386047, 0.9380483570460705],
+    ["EfficientNetV2B1", "Ordinal", 0.11565805226564407, 0.9613478779792786, 0.9444571476964769],
+    ["" ,"regular", 0.1671442985534668, 0.9459861516952515, 0.9223675767934952],
+    ["Basic+EfficientNetB0", "Ordinal", 0.08932621031999588, 0.9682854413986206, 0.9544263775971094],
+    ["", "Regular", 0.1766013503074646, 0.9494549036026001, 0.927367039295393],
+    ["Basic+EfficientNetV2B1", "Ordinal", 0.05896323174238205, 0.9757185578346252, 0.9651076953477868],
+    ["" ,"Regular", 0.1844896376132965, 0.9316154718399048, 0.9058632603567519],
+]
+
+# Headers
+headers = ["Model", "Classification", "Loss", "Accuracy", "Scott's Pi"]
+
+# Display the table
+def print_row(row):
+    rounded_row = [round(val, 2) if isinstance(val, float) else val for val in row]
+    print("| {:<22} | {:<15} | {:<15} | {:<15} | {:<15} |".format(*rounded_row))
+
+def print_separator():
+    print("+{:->24}+{:->17}+{:->17}+{:->17}+{:->17}+".format("", "", "", "", ""))
+
+# Print table header
+print_separator()
+print_row(headers)
+print_separator()
+
+# Print data rows
+for row in data:
+    print_row(row)
+
+# Print bottom separator
+print_separator()
++------------------------+-----------------+-----------------+-----------------+-----------------+
+| Model                  | Classification  | Loss            | Accuracy        | Scott's Pi      |
++------------------------+-----------------+-----------------+-----------------+-----------------+
+| EfficientNetV2B1       | Ordinal         | 0.06            | 0.98            | 0.97            |
+|                        | Regular         | 0.11            | 0.96            | 0.95            |
+| Basic                  | Ordinal         | 0.07            | 0.97            | 0.96            |
+|                        | Regular         | 0.11            | 0.96            | 0.94            |
+| EfficientNetV2B1       | Ordinal         | 0.12            | 0.96            | 0.94            |
+|                        | regular         | 0.17            | 0.95            | 0.92            |
+| Basic+EfficientNetB0   | Ordinal         | 0.09            | 0.97            | 0.95            |
+|                        | Regular         | 0.18            | 0.95            | 0.93            |
+| Basic+EfficientNetV2B1 | Ordinal         | 0.06            | 0.98            | 0.97            |
+|                        | Regular         | 0.18            | 0.93            | 0.91            |
++------------------------+-----------------+-----------------+-----------------+-----------------+
+Conclusion & Discussion
+In conclusion, we were able to build a CNN to classify brain scans of Alzheimer’s patients into four different stages of the condition, with an accuracy (and Scott’s pi) of 0.98. There is not a large difference between ordinal vs categorical classification, although our ordinal model has a marginally higher accuracy. Moreover, after trying several pre-trained bases, a model from scratch, and a combination of the pre-trained bases with the homemade model, we conclude that using the pre-trained base EfficientNetB0 (without combining it) works best. As for the best way to deal with class imbalance in medical scans, we would recommend first splitting the test set from the data and subsequently using under-/oversampling.
+
+The model should generalize to the MRI scans of the brain’s z-axis of individuals affected by Alzheimer’s at different stages (and also those not affected). Our biggest limitation was the minority class: given that each individual had 60 scans (taken at different points across the z-axis), this implies that our data for the minority class (488 observations) consisted of roughly only 8 individual people. Although each person contributed many scans taken at different points of the axis, it follows that the scans from one person are still more similar to each other than comparing the scans between two different individuals. Hence, given that this problem persists across the test and training set (as it was not possible to differentiate between people), it may be that our model does not generalize as well as is expected given our accuracy if we were to test it in the future with brain scans of new subjects. To this end, the next step would be to test it on such new individuals, and ideally train a model with an increase in the minority class data. Simultaneously, we must consider that the amount of samples in each class reflect the real-world prevalence of Alzheimer’s at each different stage, as a lot fewer people have “moderate” Alzheimer’s than “very mild”, for instance.
+
+Lastly, another future consideration would be to try out different ways of implementing ordinality in CNN’s, as there are many more options to do so, some that we were not able to implement due to advanced technicality given the feasibility of our model.
+
+References
+Cao, W., Mirjalili, V., & Raschka, S. (2020). Rank consistent ordinal regression for neural networks with application to age estimation. Pattern Recognition Letters, 140, 325–331. https://doi.org/10.1016/j.patrec.2020.11.008
+Mehmood, A., Maqsood, M., Bashir, M., & Shuyuan, Y. (2020). A Deep Siamese Convolution Neural Network for Multi-Class Classification of Alzheimer Disease. Brain Sciences, 10(2), 84. https://doi.org/10.3390/brainsci10020084
+Mingxing, T., & Quoc V, L. (2020). EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks. Ithaca: Cornell University Library. https://doi.org/10.48550/arxiv.1905.11946
+Team, K. (2023). Keras documentation: Keras Applications. https://keras.io/api/applications/
+Yılmaz, A. E., & Demirhan, H. (2023). Weighted Kappa measures for ordinal multi-class classification performance. Applied Soft Computing, 134, 110020. https://doi.org/10.1016/j.asoc.2023.110020
+Division of Labour
+Bea: Class imbalance research, weighted classes fitting, literature research, introduction, conclusion, robustness analysis, model architecture and fitting
+Bence: Data research, pre-processing, literature research, exploratory data analysis, pre-trained bases, notebook editing, model architecture and fitting
+Romy: Pre-processing, literature research, class imbalance, ordinality research, model architecture and fitting, hyperparameter tuning, performance metrics, notebook editing and organizing, code cleaning
+Appendix: Other Models
+Besides our final model with the EfficientNetB0 pre-trained base, we tried out several other models. Below are the models that performanced slightly worse than our final model, but still worked well:
+
+"Basic" model
+EfficientNetV2B1 model
+EfficientNetB0 + basic model combined
+EfficientNetV2B1 + basic model combined
+10. Basic Model
+We formulated a "basic" model in which we specified convolution, batch normalization, pooling, dropout, flatten and dense layers ourselves. As with our final model, this model was trained for ordinal and regular classification. Accuracy, loss and Scott's pi were calculated on the test data.
+
+10.1 Model Architecture
+# Model architecture
+model = Sequential()
+
+model.add(Conv2D(32, kernel_size=(2, 2), input_shape=(128, 128, 3), padding='Same'))
+model.add(Conv2D(32, kernel_size=(2, 2), activation='relu', padding='Same'))
+
+model.add(BatchNormalization())
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
+
+model.add(Conv2D(64, kernel_size=(2, 2), activation='relu', padding='Same'))
+model.add(Conv2D(64, kernel_size=(2, 2), activation='relu', padding='Same'))
+
+model.add(BatchNormalization())
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+model.add(Dropout(0.25))
+
+model.add(Flatten())
+model.add(Dense(512, activation='relu'))  
+model.add(Dropout(0.5))
+model.add(Dense(4,activation='softmax'))
+
+# Summary of the model
+model.summary()
+Model: "sequential_1"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ conv2d (Conv2D)             (None, 128, 128, 32)      416       
+                                                                 
+ conv2d_1 (Conv2D)           (None, 128, 128, 32)      4128      
+                                                                 
+ batch_normalization_1 (Bat  (None, 128, 128, 32)      128       
+ chNormalization)                                                
+                                                                 
+ max_pooling2d (MaxPooling2  (None, 64, 64, 32)        0         
+ D)                                                              
+                                                                 
+ dropout_1 (Dropout)         (None, 64, 64, 32)        0         
+                                                                 
+ conv2d_2 (Conv2D)           (None, 64, 64, 64)        8256      
+                                                                 
+ conv2d_3 (Conv2D)           (None, 64, 64, 64)        16448     
+                                                                 
+ batch_normalization_2 (Bat  (None, 64, 64, 64)        256       
+ chNormalization)                                                
+                                                                 
+ max_pooling2d_1 (MaxPoolin  (None, 32, 32, 64)        0         
+ g2D)                                                            
+                                                                 
+ dropout_2 (Dropout)         (None, 32, 32, 64)        0         
+                                                                 
+ flatten (Flatten)           (None, 65536)             0         
+                                                                 
+ dense_2 (Dense)             (None, 512)               33554944  
+                                                                 
+ dropout_3 (Dropout)         (None, 512)               0         
+                                                                 
+ dense_3 (Dense)             (None, 4)                 2052      
+                                                                 
+=================================================================
+Total params: 33586628 (128.12 MB)
+Trainable params: 33586436 (128.12 MB)
+Non-trainable params: 192 (768.00 Byte)
+_________________________________________________________________
+10.2 Training for Ordinal Classification
+# Integer train labels: y_train_int
+# Integer validation labels: y_val_int
+
+# Compile the model 
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+
+# Train the model
+history = model.fit(x_train, y_train_int, epochs=10, batch_size=16, 
+                    verbose=1, validation_data=(x_val, y_val_int))
+Epoch 1/10
+2023-12-23 19:54:59.701260: E tensorflow/core/grappler/optimizers/meta_optimizer.cc:954] layout failed: INVALID_ARGUMENT: Size of values 0 does not match size of permutation 4 @ fanin shape insequential_1/dropout_1/dropout/SelectV2-2-TransposeNHWCToNCHW-LayoutOptimizer
+1000/1000 [==============================] - 22s 20ms/step - loss: 1.7468 - accuracy: 0.6629 - val_loss: 0.4110 - val_accuracy: 0.8378
+Epoch 2/10
+1000/1000 [==============================] - 19s 19ms/step - loss: 0.4942 - accuracy: 0.7947 - val_loss: 0.2246 - val_accuracy: 0.9200
+Epoch 3/10
+1000/1000 [==============================] - 19s 19ms/step - loss: 0.3897 - accuracy: 0.8472 - val_loss: 0.2491 - val_accuracy: 0.8938
+Epoch 4/10
+1000/1000 [==============================] - 19s 19ms/step - loss: 0.3320 - accuracy: 0.8731 - val_loss: 0.1488 - val_accuracy: 0.9438
+Epoch 5/10
+1000/1000 [==============================] - 19s 19ms/step - loss: 0.2418 - accuracy: 0.9074 - val_loss: 0.1424 - val_accuracy: 0.9452
+Epoch 6/10
+1000/1000 [==============================] - 19s 19ms/step - loss: 0.2338 - accuracy: 0.9116 - val_loss: 0.1221 - val_accuracy: 0.9590
+Epoch 7/10
+1000/1000 [==============================] - 19s 19ms/step - loss: 0.2298 - accuracy: 0.9216 - val_loss: 0.3769 - val_accuracy: 0.9115
+Epoch 8/10
+1000/1000 [==============================] - 19s 19ms/step - loss: 0.1868 - accuracy: 0.9312 - val_loss: 0.0649 - val_accuracy: 0.9775
+Epoch 9/10
+1000/1000 [==============================] - 19s 19ms/step - loss: 0.1635 - accuracy: 0.9415 - val_loss: 0.0648 - val_accuracy: 0.9737
+Epoch 10/10
+1000/1000 [==============================] - 19s 19ms/step - loss: 0.1629 - accuracy: 0.9393 - val_loss: 0.1487 - val_accuracy: 0.9423
+10.3 Results on Test Set
+10.3.1 Accuracy & Loss
+# True integer labels: y_test_int
+
+# Evaluate on test set
+testeval = model.evaluate(x_test, y_test_int, verbose=2)
+
+# Print performance metrics (loss and accuracy)
+print("Test Loss:", testeval[0])
+print("Test Accuracy:", testeval[1])
+64/64 - 1s - loss: 0.1630 - accuracy: 0.9430 - 744ms/epoch - 12ms/step
+Test Loss: 0.16297271847724915
+Test Accuracy: 0.9430128931999207
+10.3.2 Scott's Pi
+# Scott's pi function: scotts_pi
+
+# True integer labels: y_test_int
+
+# Convert predicted labels to integers 
+y_pred_bm_int = np.argmax(model.predict(x_test), axis=1)
+
+# Calculate confusion matrix
+conf_matrix = confusion_matrix(y_test_int, y_pred_bm_int)
+
+# Calculate Scott's Pi
+pi = scotts_pi(conf_matrix)
+print("Scott's Pi:", pi)
+64/64 [==============================] - 0s 6ms/step
+Scott's Pi: 0.9182037606461646
+10.4 Training for Regular Classification
+# Store model architecture in new object, to prevent confusion (e.g. with compiling, training and calculating test accuracy later)
+# By cloning the model
+model_rc = clone_model(model)
+
+# Compile with ('regular') categorical_crossentropy 
+model_rc.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+# Train the model
+history_rc = model_rc.fit(x_train, y_train, epochs=10, batch_size=16, 
+                         verbose=1, validation_data=(x_val, y_val))
+Epoch 1/10
+2023-12-23 19:58:55.654956: E tensorflow/core/grappler/optimizers/meta_optimizer.cc:954] layout failed: INVALID_ARGUMENT: Size of values 0 does not match size of permutation 4 @ fanin shape insequential_1/dropout_1/dropout/SelectV2-2-TransposeNHWCToNCHW-LayoutOptimizer
+1000/1000 [==============================] - 22s 20ms/step - loss: 1.4411 - accuracy: 0.6579 - val_loss: 0.5475 - val_accuracy: 0.8095
+Epoch 2/10
+1000/1000 [==============================] - 19s 19ms/step - loss: 0.5254 - accuracy: 0.7811 - val_loss: 0.3111 - val_accuracy: 0.8800
+Epoch 3/10
+1000/1000 [==============================] - 19s 19ms/step - loss: 0.4081 - accuracy: 0.8346 - val_loss: 0.2379 - val_accuracy: 0.8995
+Epoch 4/10
+1000/1000 [==============================] - 19s 19ms/step - loss: 0.3405 - accuracy: 0.8662 - val_loss: 0.3290 - val_accuracy: 0.8975
+Epoch 5/10
+1000/1000 [==============================] - 19s 19ms/step - loss: 0.3130 - accuracy: 0.8832 - val_loss: 0.1387 - val_accuracy: 0.9477
+Epoch 6/10
+1000/1000 [==============================] - 19s 19ms/step - loss: 0.2524 - accuracy: 0.8986 - val_loss: 0.1780 - val_accuracy: 0.9410
+Epoch 7/10
+1000/1000 [==============================] - 19s 19ms/step - loss: 0.2385 - accuracy: 0.9044 - val_loss: 0.2710 - val_accuracy: 0.8855
+Epoch 8/10
+1000/1000 [==============================] - 19s 19ms/step - loss: 0.2289 - accuracy: 0.9114 - val_loss: 0.3892 - val_accuracy: 0.8910
+Epoch 9/10
+1000/1000 [==============================] - 19s 19ms/step - loss: 0.2083 - accuracy: 0.9170 - val_loss: 0.1535 - val_accuracy: 0.9563
+Epoch 10/10
+1000/1000 [==============================] - 19s 19ms/step - loss: 0.2022 - accuracy: 0.9243 - val_loss: 0.1320 - val_accuracy: 0.9603
+10.5 Results on Test Set
+10.5.1 Accuracy & Loss
+# Evaluate on test set 
+testeval = model_rc.evaluate(x_test, y_test, verbose=2)
+
+# Printing performance metrics (loss and accuracy)
+print("Test Loss:", testeval[0])
+print("Test Accuracy:", testeval[1])
+64/64 - 1s - loss: 0.1188 - accuracy: 0.9534 - 637ms/epoch - 10ms/step
+Test Loss: 0.11880689114332199
+Test Accuracy: 0.9534192085266113
+10.5.2 Scott's Pi
+# Scott's pi function: scotts_pi
+
+# True integer labels: y_test_int 
+
+# Convert predicted labels to integers 
+y_pred_bm_rc_int = np.argmax(model_rc.predict(x_test), axis=1)
+
+# Calculate confusion matrix
+conf_matrix = confusion_matrix(y_test_int, y_pred_bm_rc_int)
+
+# Calculate Scott's Pi
+pi = scotts_pi(conf_matrix)
+print("Scott's Pi:", pi)
+64/64 [==============================] - 0s 6ms/step
+Scott's Pi: 0.9330637420957543
+11. EfficientNetV2B1 Model
+We tried another EfficientNet version pretrained base as well. Again, this model was trained for ordinal and regular classification. Accuracy, loss and Scott's pi were calculated on the test data.
+
+11.1 Model Architecture
+# Load the pre-trained EfficientNetV2B1 model without top (classification) layers
+pretrained_base_EfficientNetV2B1 = EfficientNetV2B1(weights='imagenet', include_top=False, input_shape=(128, 128, 3))
+
+# Make the weights of the pretrained base trainable ("unfreeze")
+pretrained_base_EfficientNetV2B1.trainable = True
+
+# Create a custom model on top of the pre-trained base
+model_EfficientNetV2B1 = models.Sequential([
+    pretrained_base_EfficientNetV2B1,
+    layers.BatchNormalization(),
+    layers.GlobalAveragePooling2D(),
+    layers.Flatten(),
+    layers.Dense(256, activation='relu'),
+    layers.Dropout(0.5),
+    layers.Dense(4, activation='softmax')
+])
+
+# Summary of the model
+model_EfficientNetV2B1.summary()
+Downloading data from https://storage.googleapis.com/tensorflow/keras-applications/efficientnet_v2/efficientnetv2-b1_notop.h5
+28456008/28456008 [==============================] - 0s 0us/step
+Model: "sequential_2"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ efficientnetv2-b1 (Functio  (None, 4, 4, 1280)        6931124   
+ nal)                                                            
+                                                                 
+ batch_normalization_3 (Bat  (None, 4, 4, 1280)        5120      
+ chNormalization)                                                
+                                                                 
+ global_average_pooling2d_1  (None, 1280)              0         
+  (GlobalAveragePooling2D)                                       
+                                                                 
+ flatten_1 (Flatten)         (None, 1280)              0         
+                                                                 
+ dense_4 (Dense)             (None, 256)               327936    
+                                                                 
+ dropout_4 (Dropout)         (None, 256)               0         
+                                                                 
+ dense_5 (Dense)             (None, 4)                 1028      
+                                                                 
+=================================================================
+Total params: 7265208 (27.71 MB)
+Trainable params: 7191576 (27.43 MB)
+Non-trainable params: 73632 (287.62 KB)
+_________________________________________________________________
+11.2 Training for Ordinal Classification
+# Integer train labels: y_train_int
+# Integer validation labels: y_val_int
+
+# Compile the model
+model_EfficientNetV2B1.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+
+# Train the model
+history_EfficientNetV2B1 = model_EfficientNetV2B1.fit(x_train, y_train_int, epochs=10, batch_size=16, 
+                                                      verbose=1, validation_data=(x_val, y_val_int))
+Epoch 1/10
+2023-12-23 20:03:26.755591: E tensorflow/core/grappler/optimizers/meta_optimizer.cc:954] layout failed: INVALID_ARGUMENT: Size of values 0 does not match size of permutation 4 @ fanin shape insequential_2/efficientnetv2-b1/block1b_drop/dropout/SelectV2-2-TransposeNHWCToNCHW-LayoutOptimizer
+1000/1000 [==============================] - 100s 48ms/step - loss: 0.4753 - accuracy: 0.8121 - val_loss: 0.2590 - val_accuracy: 0.8878
+Epoch 2/10
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.2260 - accuracy: 0.9202 - val_loss: 0.0940 - val_accuracy: 0.9660
+Epoch 3/10
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.1764 - accuracy: 0.9388 - val_loss: 0.0939 - val_accuracy: 0.9668
+Epoch 4/10
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.1274 - accuracy: 0.9566 - val_loss: 0.0765 - val_accuracy: 0.9720
+Epoch 5/10
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0922 - accuracy: 0.9696 - val_loss: 0.0790 - val_accuracy: 0.9725
+Epoch 6/10
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.1087 - accuracy: 0.9648 - val_loss: 0.0688 - val_accuracy: 0.9740
+Epoch 7/10
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0548 - accuracy: 0.9822 - val_loss: 0.0625 - val_accuracy: 0.9793
+Epoch 8/10
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0647 - accuracy: 0.9787 - val_loss: 0.0660 - val_accuracy: 0.9820
+Epoch 9/10
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0602 - accuracy: 0.9822 - val_loss: 0.0539 - val_accuracy: 0.9780
+Epoch 10/10
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0545 - accuracy: 0.9829 - val_loss: 0.0606 - val_accuracy: 0.9790
+11.3 Results on Test Set
+11.3.1 Accuracy & Loss
+# True integer labels: y_test_int
+
+# Example assuming 'x_test' is your test data and 'y_test' is your test labels
+testeval = model_EfficientNetV2B1.evaluate(x_test, y_test_int, verbose=2)
+
+# Print performance metrics (loss and accuracy)
+print("Test Loss:", testeval[0])
+print("Test Accuracy:", testeval[1])
+64/64 - 4s - loss: 0.0655 - accuracy: 0.9777 - 4s/epoch - 59ms/step
+Test Loss: 0.06545893847942352
+Test Accuracy: 0.9777007102966309
+11.3.2 Scott's Pi
+# Scott's pi function: scotts_pi
+
+# True integer labels: y_test_int
+
+# Convert predicted labels to integers 
+y_pred_V2B1_int = np.argmax(model_EfficientNetV2B1.predict(x_test), axis=1)
+
+# Calculate confusion matrix
+conf_matrix = confusion_matrix(y_test_int, y_pred_V2B1_int)
+
+# Calculate Scott's Pi
+pi = scotts_pi(conf_matrix)
+print("Scott's Pi:", pi)
+64/64 [==============================] - 3s 16ms/step
+Scott's Pi: 0.9679560467479674
+11.4 Training for Regular Classification
+# Store model architecture in new object, to prevent confusion (e.g. with compiling, training and calculating test accuracy later)
+# By cloning the model
+model_EfficientNetV2B1_rc = clone_model(model_EfficientNetV2B1) 
+
+# Compile with ('regular') categorical_crossentropy 
+model_EfficientNetV2B1_rc.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+# Train the model
+history_EfficientNetV2B1_rc = model_EfficientNetV2B1_rc.fit(x_train, y_train, epochs=10, batch_size=16, 
+                                                            verbose=1, validation_data=(x_val, y_val))
+Epoch 1/10
+2023-12-23 20:12:55.007630: E tensorflow/core/grappler/optimizers/meta_optimizer.cc:954] layout failed: INVALID_ARGUMENT: Size of values 0 does not match size of permutation 4 @ fanin shape insequential_2/efficientnetv2-b1/block1b_drop/dropout/SelectV2-2-TransposeNHWCToNCHW-LayoutOptimizer
+1000/1000 [==============================] - 100s 49ms/step - loss: 0.9825 - accuracy: 0.5931 - val_loss: 0.3880 - val_accuracy: 0.8367
+Epoch 2/10
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.4506 - accuracy: 0.8239 - val_loss: 0.2626 - val_accuracy: 0.8875
+Epoch 3/10
+1000/1000 [==============================] - 47s 47ms/step - loss: 0.3894 - accuracy: 0.8516 - val_loss: 0.1912 - val_accuracy: 0.9230
+Epoch 4/10
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.2474 - accuracy: 0.9091 - val_loss: 0.1355 - val_accuracy: 0.9482
+Epoch 5/10
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.1840 - accuracy: 0.9371 - val_loss: 0.1271 - val_accuracy: 0.9557
+Epoch 6/10
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.1753 - accuracy: 0.9410 - val_loss: 0.1178 - val_accuracy: 0.9572
+Epoch 7/10
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.1747 - accuracy: 0.9404 - val_loss: 0.1253 - val_accuracy: 0.9553
+Epoch 8/10
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.1117 - accuracy: 0.9622 - val_loss: 0.0940 - val_accuracy: 0.9730
+Epoch 9/10
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.1273 - accuracy: 0.9566 - val_loss: 0.0749 - val_accuracy: 0.9747
+Epoch 10/10
+1000/1000 [==============================] - 46s 46ms/step - loss: 0.0691 - accuracy: 0.9771 - val_loss: 0.0612 - val_accuracy: 0.9795
+11.5 Results on Test Set
+11.5.1 Accuracy & Loss
+# Evaluate on test set 
+testeval = model_EfficientNetV2B1_rc.evaluate(x_test, y_test, verbose=2)
+
+# Print performance metrics (loss and accuracy)
+print("Test Loss:", testeval[0])
+print("Test Accuracy:", testeval[1])
+64/64 - 3s - loss: 0.0686 - accuracy: 0.9752 - 3s/epoch - 50ms/step
+Test Loss: 0.06859343498945236
+Test Accuracy: 0.9752230048179626
+11.5.2 Scott's Pi
+# Scott's pi function: scotts_pi
+
+# True integer labels: y_test_int
+
+# Convert predicted labels to integers 
+y_pred_V2B1_rc_int = np.argmax(model_EfficientNetV2B1_rc.predict(x_test), axis=1)
+
+# Calculate confusion matrix
+conf_matrix = confusion_matrix(y_test_int, y_pred_V2B1_rc_int)
+
+# Calculate Scott's Pi
+pi = scotts_pi(conf_matrix)
+print("Scott's Pi:", pi)
+64/64 [==============================] - 3s 16ms/step
+Scott's Pi: 0.9644024156965237
+12. "Basic" and EfficientNetB0 Combined Model
+We tried out a combination of our basic model combined with the EfficientNetB0 pre-trained base. This model was also trained for ordinal as well as regular classification. Accuracy, loss and Scott's pi were calculated on the test data.
+
+12.1 Model Architecture
+# Load the pre-trained EfficientNetB0 model without top (classification) layers
+pretrained_base_EfficientNetB0 = EfficientNetB0(weights='imagenet', include_top=False, input_shape=(128, 128, 3))
+
+# Make the weights of the pretrained base trainable ("unfreeze")
+pretrained_base_EfficientNetB0.trainable = True
+
+# Put basic model on top of the pre-trained base
+model_combined_B0 = models.Sequential([
+    pretrained_base_EfficientNetB0,
+    layers.GlobalAveragePooling2D(),
+    layers.Reshape((1, 1, 1280)),  # Reshape the tensor
+    layers.Conv2D(32, kernel_size=(2, 2), padding='same'),
+    layers.Conv2D(32, kernel_size=(2, 2), activation='relu', padding='same'),
+    layers.BatchNormalization(),
+    layers.MaxPooling2D(pool_size=(1, 1)),  # Adjust the pooling size
+    layers.Dropout(0.25),
+    layers.Conv2D(64, kernel_size=(2, 2), activation='relu', padding='same'),
+    layers.Conv2D(64, kernel_size=(2, 2), activation='relu', padding='same'),
+    layers.BatchNormalization(),
+    layers.MaxPooling2D(pool_size=(1, 1)),  # Adjust the pooling size
+    layers.Dropout(0.25),
+    layers.Flatten(),
+    layers.Dense(512, activation='relu'),
+    layers.Dropout(0.5),
+    layers.Dense(4, activation='softmax')
+])
+
+# Print model summary
+model_combined_B0.summary()
+Model: "sequential_3"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ efficientnetb0 (Functional  (None, 4, 4, 1280)        4049571   
+ )                                                               
+                                                                 
+ global_average_pooling2d_2  (None, 1280)              0         
+  (GlobalAveragePooling2D)                                       
+                                                                 
+ reshape (Reshape)           (None, 1, 1, 1280)        0         
+                                                                 
+ conv2d_4 (Conv2D)           (None, 1, 1, 32)          163872    
+                                                                 
+ conv2d_5 (Conv2D)           (None, 1, 1, 32)          4128      
+                                                                 
+ batch_normalization_4 (Bat  (None, 1, 1, 32)          128       
+ chNormalization)                                                
+                                                                 
+ max_pooling2d_2 (MaxPoolin  (None, 1, 1, 32)          0         
+ g2D)                                                            
+                                                                 
+ dropout_5 (Dropout)         (None, 1, 1, 32)          0         
+                                                                 
+ conv2d_6 (Conv2D)           (None, 1, 1, 64)          8256      
+                                                                 
+ conv2d_7 (Conv2D)           (None, 1, 1, 64)          16448     
+                                                                 
+ batch_normalization_5 (Bat  (None, 1, 1, 64)          256       
+ chNormalization)                                                
+                                                                 
+ max_pooling2d_3 (MaxPoolin  (None, 1, 1, 64)          0         
+ g2D)                                                            
+                                                                 
+ dropout_6 (Dropout)         (None, 1, 1, 64)          0         
+                                                                 
+ flatten_2 (Flatten)         (None, 64)                0         
+                                                                 
+ dense_6 (Dense)             (None, 512)               33280     
+                                                                 
+ dropout_7 (Dropout)         (None, 512)               0         
+                                                                 
+ dense_7 (Dense)             (None, 4)                 2052      
+                                                                 
+=================================================================
+Total params: 4277991 (16.32 MB)
+Trainable params: 4235776 (16.16 MB)
+Non-trainable params: 42215 (164.91 KB)
+_________________________________________________________________
+12.2 Training for Ordinal Classification
+# Integer train labels: y_train_int
+# Integer validation labels: y_val_int
+
+# Compile the model
+model_combined_B0.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+
+# Train the model
+history_combined_B0 = model_combined_B0.fit(x_train, y_train_int, epochs=10, batch_size=16, 
+                                            verbose=1, validation_data=(x_val, y_val_int))
+Epoch 1/10
+2023-12-23 20:22:42.404868: E tensorflow/core/grappler/optimizers/meta_optimizer.cc:954] layout failed: INVALID_ARGUMENT: Size of values 0 does not match size of permutation 4 @ fanin shape insequential_3/efficientnetb0/block2b_drop/dropout/SelectV2-2-TransposeNHWCToNCHW-LayoutOptimizer
+1000/1000 [==============================] - 88s 49ms/step - loss: 0.7229 - accuracy: 0.7101 - val_loss: 0.4102 - val_accuracy: 0.8338
+Epoch 2/10
+1000/1000 [==============================] - 47s 47ms/step - loss: 0.3606 - accuracy: 0.8772 - val_loss: 0.2961 - val_accuracy: 0.8970
+Epoch 3/10
+1000/1000 [==============================] - 47s 47ms/step - loss: 0.2843 - accuracy: 0.9086 - val_loss: 1.4491 - val_accuracy: 0.5683
+Epoch 4/10
+1000/1000 [==============================] - 47s 47ms/step - loss: 0.2125 - accuracy: 0.9300 - val_loss: 0.1294 - val_accuracy: 0.9467
+Epoch 5/10
+1000/1000 [==============================] - 47s 47ms/step - loss: 0.1522 - accuracy: 0.9526 - val_loss: 0.0884 - val_accuracy: 0.9718
+Epoch 6/10
+1000/1000 [==============================] - 48s 48ms/step - loss: 0.1204 - accuracy: 0.9614 - val_loss: 0.0643 - val_accuracy: 0.9787
+Epoch 7/10
+1000/1000 [==============================] - 47s 47ms/step - loss: 0.1144 - accuracy: 0.9667 - val_loss: 0.0627 - val_accuracy: 0.9745
+Epoch 8/10
+1000/1000 [==============================] - 48s 48ms/step - loss: 0.1377 - accuracy: 0.9591 - val_loss: 0.1159 - val_accuracy: 0.9628
+Epoch 9/10
+1000/1000 [==============================] - 49s 49ms/step - loss: 0.0699 - accuracy: 0.9794 - val_loss: 0.1423 - val_accuracy: 0.9517
+Epoch 10/10
+1000/1000 [==============================] - 47s 47ms/step - loss: 0.0842 - accuracy: 0.9742 - val_loss: 0.2039 - val_accuracy: 0.9212
+12.3 Results on Test Set
+12.3.1 Accuracy & Loss
+# True integer labels: y_test_int
+
+# Example assuming 'x_test' is your test data and 'y_test' is your test labels
+testeval = model_combined_B0.evaluate(x_test, y_test_int, verbose=2)
+
+# Print performance metrics (loss and accuracy)
+print("Test Loss:", testeval[0])
+print("Test Accuracy:", testeval[1])
+64/64 - 3s - loss: 0.2511 - accuracy: 0.9068 - 3s/epoch - 43ms/step
+Test Loss: 0.2511013448238373
+Test Accuracy: 0.9068384766578674
+12.3.2 Scott's Pi
+# Scott's pi function: scotts_pi
+
+# True integer labels: y_test_int
+
+# Convert predicted labels to integers 
+y_pred_combB0_int = np.argmax(model_combined_B0.predict(x_test), axis=1)
+
+# Calculate confusion matrix
+conf_matrix = confusion_matrix(y_test_int, y_pred_combB0_int)
+
+# Calculate Scott's Pi
+pi = scotts_pi(conf_matrix)
+print("Scott's Pi:", pi)
+64/64 [==============================] - 3s 16ms/step
+Scott's Pi: 0.8661274841915085
+12.4 Training for Regular Classification
+# Store model architecture in new object, to prevent confusion (e.g. with compiling, training and calculating test accuracy later)
+# By cloning the model
+model_combined_B0_rc = clone_model(model_combined_B0)
+
+# Compile with ('regular') categorical_crossentropy 
+model_combined_B0_rc.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+# Train the model
+history_combined_B0_rc = model_combined_B0_rc.fit(x_train, y_train, epochs=10, batch_size=16, 
+                                                  verbose=1, validation_data=(x_val, y_val))
+Epoch 1/10
+2023-12-23 20:32:23.083662: E tensorflow/core/grappler/optimizers/meta_optimizer.cc:954] layout failed: INVALID_ARGUMENT: Size of values 0 does not match size of permutation 4 @ fanin shape insequential_3/efficientnetb0/block2b_drop/dropout/SelectV2-2-TransposeNHWCToNCHW-LayoutOptimizer
+1000/1000 [==============================] - 87s 50ms/step - loss: 0.9295 - accuracy: 0.5704 - val_loss: 0.4946 - val_accuracy: 0.7865
+Epoch 2/10
+1000/1000 [==============================] - 48s 48ms/step - loss: 0.5188 - accuracy: 0.8007 - val_loss: 0.3201 - val_accuracy: 0.8727
+Epoch 3/10
+1000/1000 [==============================] - 49s 49ms/step - loss: 0.3745 - accuracy: 0.8648 - val_loss: 0.3049 - val_accuracy: 0.8802
+Epoch 4/10
+1000/1000 [==============================] - 48s 48ms/step - loss: 0.2622 - accuracy: 0.9103 - val_loss: 0.2007 - val_accuracy: 0.9233
+Epoch 5/10
+1000/1000 [==============================] - 48s 48ms/step - loss: 0.2537 - accuracy: 0.9167 - val_loss: 0.4537 - val_accuracy: 0.8480
+Epoch 6/10
+1000/1000 [==============================] - 48s 48ms/step - loss: 0.1660 - accuracy: 0.9481 - val_loss: 0.0899 - val_accuracy: 0.9665
+Epoch 7/10
+1000/1000 [==============================] - 48s 48ms/step - loss: 0.1499 - accuracy: 0.9553 - val_loss: 0.1224 - val_accuracy: 0.9560
+Epoch 8/10
+1000/1000 [==============================] - 50s 50ms/step - loss: 0.1299 - accuracy: 0.9595 - val_loss: 0.0874 - val_accuracy: 0.9697
+Epoch 9/10
+1000/1000 [==============================] - 49s 49ms/step - loss: 0.1151 - accuracy: 0.9657 - val_loss: 0.1189 - val_accuracy: 0.9613
+Epoch 10/10
+1000/1000 [==============================] - 48s 48ms/step - loss: 0.0861 - accuracy: 0.9756 - val_loss: 0.1136 - val_accuracy: 0.9707
+12.5 Results on Test Set
+12.5.1 Accuracy & Loss
+# Evaluate on test set 
+testeval = model_combined_B0_rc.evaluate(x_test, y_test, verbose=2)
+
+# Print performance metrics (loss and accuracy)
+print("Test Loss:", testeval[0])
+print("Test Accuracy:", testeval[1])
+64/64 - 3s - loss: 0.1524 - accuracy: 0.9618 - 3s/epoch - 42ms/step
+Test Loss: 0.1524084210395813
+Test Accuracy: 0.9618434309959412
+12.5.2 Scott's Pi
+# Scott's pi function: scotts_pi
+
+# True integer labels: y_test_int
+
+# Convert predicted labels to integers 
+y_pred_combB0_rc_int = np.argmax(model_combined_B0_rc.predict(x_test), axis=1)
+
+# Calculate confusion matrix
+conf_matrix = confusion_matrix(y_test_int, y_pred_combB0_rc_int)
+
+# Calculate Scott's Pi
+pi = scotts_pi(conf_matrix)
+print("Scott's Pi:", pi)
+64/64 [==============================] - 3s 16ms/step
+Scott's Pi: 0.9451692355465221
+13. "Basic" and EfficientNetV2B1 Combined Model
+Lastly, we specified a combination of our basic model with the EfficientNetV2B1 pre-trained base. This model was also trained for ordinal as well as regular classification. Accuracy, loss and Scott's pi were calculated on the test data.
+
+13.1 Model Architecture
+# Load the pre-trained EfficientNetV2B1 model without top (classification) layers
+pretrained_base_EfficientNetV2B1 = EfficientNetV2B1(weights='imagenet', include_top=False, input_shape=(128, 128, 3))
+
+# Make the weights of the pretrained base trainable ("unfreeze")
+pretrained_base_EfficientNetV2B1.trainable = True
+
+# Put basic model on top of the pre-trained base
+model_combined_V2B1 = models.Sequential([
+    pretrained_base_EfficientNetV2B1,
+    layers.GlobalAveragePooling2D(),
+    layers.Reshape((1, 1, 1280)),  # Reshape the tensor
+    layers.Conv2D(32, kernel_size=(2, 2), padding='same'),
+    layers.Conv2D(32, kernel_size=(2, 2), activation='relu', padding='same'),
+    layers.BatchNormalization(),
+    layers.MaxPooling2D(pool_size=(1, 1)),  # Adjust the pooling size
+    layers.Dropout(0.25),
+    layers.Conv2D(64, kernel_size=(2, 2), activation='relu', padding='same'),
+    layers.Conv2D(64, kernel_size=(2, 2), activation='relu', padding='same'),
+    layers.BatchNormalization(),
+    layers.MaxPooling2D(pool_size=(1, 1)),  # Adjust the pooling size
+    layers.Dropout(0.25),
+    layers.Flatten(),
+    layers.Dense(512, activation='relu'),
+    layers.Dropout(0.5),
+    layers.Dense(4, activation='softmax')
+])
+
+# Print model summary
+model_combined_V2B1.summary()
+Model: "sequential_4"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ efficientnetv2-b1 (Functio  (None, 4, 4, 1280)        6931124   
+ nal)                                                            
+                                                                 
+ global_average_pooling2d_3  (None, 1280)              0         
+  (GlobalAveragePooling2D)                                       
+                                                                 
+ reshape_1 (Reshape)         (None, 1, 1, 1280)        0         
+                                                                 
+ conv2d_8 (Conv2D)           (None, 1, 1, 32)          163872    
+                                                                 
+ conv2d_9 (Conv2D)           (None, 1, 1, 32)          4128      
+                                                                 
+ batch_normalization_6 (Bat  (None, 1, 1, 32)          128       
+ chNormalization)                                                
+                                                                 
+ max_pooling2d_4 (MaxPoolin  (None, 1, 1, 32)          0         
+ g2D)                                                            
+                                                                 
+ dropout_8 (Dropout)         (None, 1, 1, 32)          0         
+                                                                 
+ conv2d_10 (Conv2D)          (None, 1, 1, 64)          8256      
+                                                                 
+ conv2d_11 (Conv2D)          (None, 1, 1, 64)          16448     
+                                                                 
+ batch_normalization_7 (Bat  (None, 1, 1, 64)          256       
+ chNormalization)                                                
+                                                                 
+ max_pooling2d_5 (MaxPoolin  (None, 1, 1, 64)          0         
+ g2D)                                                            
+                                                                 
+ dropout_9 (Dropout)         (None, 1, 1, 64)          0         
+                                                                 
+ flatten_3 (Flatten)         (None, 64)                0         
+                                                                 
+ dense_8 (Dense)             (None, 512)               33280     
+                                                                 
+ dropout_10 (Dropout)        (None, 512)               0         
+                                                                 
+ dense_9 (Dense)             (None, 4)                 2052      
+                                                                 
+=================================================================
+Total params: 7159544 (27.31 MB)
+Trainable params: 7088280 (27.04 MB)
+Non-trainable params: 71264 (278.38 KB)
+_________________________________________________________________
+13.2 Training for Ordinal Classification
+# Integer train labels: y_train_int
+# Integer validation labels: y_val_int
+
+# Compile the model
+model_combined_V2B1.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+
+# Train the model
+history_combined_V2B1 = model_combined_V2B1.fit(x_train, y_train_int, epochs=10, batch_size=16, 
+                                                verbose=1, validation_data=(x_val, y_val_int))
+Epoch 1/10
+2023-12-23 20:42:46.170090: E tensorflow/core/grappler/optimizers/meta_optimizer.cc:954] layout failed: INVALID_ARGUMENT: Size of values 0 does not match size of permutation 4 @ fanin shape insequential_4/efficientnetv2-b1/block1b_drop/dropout/SelectV2-2-TransposeNHWCToNCHW-LayoutOptimizer
+1000/1000 [==============================] - 103s 51ms/step - loss: 0.7198 - accuracy: 0.7054 - val_loss: 0.2806 - val_accuracy: 0.8867
+Epoch 2/10
+1000/1000 [==============================] - 49s 49ms/step - loss: 0.3852 - accuracy: 0.8612 - val_loss: 0.2515 - val_accuracy: 0.8992
+Epoch 3/10
+1000/1000 [==============================] - 49s 49ms/step - loss: 0.2940 - accuracy: 0.9009 - val_loss: 0.1175 - val_accuracy: 0.9613
+Epoch 4/10
+1000/1000 [==============================] - 49s 49ms/step - loss: 0.1993 - accuracy: 0.9343 - val_loss: 0.1082 - val_accuracy: 0.9603
+Epoch 5/10
+1000/1000 [==============================] - 48s 48ms/step - loss: 0.1568 - accuracy: 0.9486 - val_loss: 0.0710 - val_accuracy: 0.9750
+Epoch 6/10
+1000/1000 [==============================] - 50s 50ms/step - loss: 0.1428 - accuracy: 0.9553 - val_loss: 0.0766 - val_accuracy: 0.9728
+Epoch 7/10
+1000/1000 [==============================] - 49s 49ms/step - loss: 0.1239 - accuracy: 0.9618 - val_loss: 0.1850 - val_accuracy: 0.9377
+Epoch 8/10
+1000/1000 [==============================] - 50s 50ms/step - loss: 0.0926 - accuracy: 0.9731 - val_loss: 0.0595 - val_accuracy: 0.9808
+Epoch 9/10
+1000/1000 [==============================] - 49s 49ms/step - loss: 0.1010 - accuracy: 0.9694 - val_loss: 0.0541 - val_accuracy: 0.9805
+Epoch 10/10
+1000/1000 [==============================] - 54s 54ms/step - loss: 0.0715 - accuracy: 0.9801 - val_loss: 0.1711 - val_accuracy: 0.9490
+13.3 Results on Test Set
+13.3.1 Accuracy & Loss
+# True integer labels: y_test_int
+
+# Example assuming 'x_test' is your test data and 'y_test' is your test labels
+testeval = model_combined_V2B1.evaluate(x_test, y_test_int, verbose=2)
+
+# Print performance metrics (loss and accuracy)
+print("Test Loss:", testeval[0])
+print("Test Accuracy:", testeval[1])
+64/64 - 3s - loss: 0.2202 - accuracy: 0.9435 - 3s/epoch - 51ms/step
+Test Loss: 0.2202148288488388
+Test Accuracy: 0.9435084462165833
+13.3.2 Scott's Pi
+# Scott's pi function: scotts_pi
+
+# True integer labels: y_test_int
+
+# Convert predicted labels to integers 
+y_pred_combV2B1_int = np.argmax(model_combined_V2B1.predict(x_test), axis=1)
+
+# Calculate confusion matrix
+conf_matrix = confusion_matrix(y_test_int, y_pred_combV2B1_int)
+
+# Calculate Scott's Pi
+pi = scotts_pi(conf_matrix)
+print("Scott's Pi:", pi)
+64/64 [==============================] - 3s 17ms/step
+Scott's Pi: 0.9188219850948509
+13.4 Training for Regular Classification
+# Store model architecture in new object, to prevent confusion (e.g. with compiling, training and calculating test accuracy later)
+# By cloning the model
+model_combined_V2B1_rc = clone_model(model_combined_V2B1)
+
+# Compile with ('regular') categorical_crossentropy 
+model_combined_V2B1_rc.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+# Train the model
+history_combined_V2B1_rc = model_combined_V2B1_rc.fit(x_train, y_train, epochs=10, batch_size=16, 
+                                                        verbose=1, validation_data=(x_val, y_val))
+Epoch 1/10
+2023-12-23 20:53:13.937820: E tensorflow/core/grappler/optimizers/meta_optimizer.cc:954] layout failed: INVALID_ARGUMENT: Size of values 0 does not match size of permutation 4 @ fanin shape insequential_4/efficientnetv2-b1/block1b_drop/dropout/SelectV2-2-TransposeNHWCToNCHW-LayoutOptimizer
+1000/1000 [==============================] - 105s 52ms/step - loss: 1.1124 - accuracy: 0.4606 - val_loss: 0.6827 - val_accuracy: 0.6930
+Epoch 2/10
+1000/1000 [==============================] - 50s 50ms/step - loss: 0.6783 - accuracy: 0.7084 - val_loss: 0.4784 - val_accuracy: 0.7960
+Epoch 3/10
+1000/1000 [==============================] - 52s 52ms/step - loss: 0.5319 - accuracy: 0.7912 - val_loss: 0.3232 - val_accuracy: 0.8702
+Epoch 4/10
+1000/1000 [==============================] - 50s 50ms/step - loss: 0.4262 - accuracy: 0.8426 - val_loss: 0.2528 - val_accuracy: 0.9062
+Epoch 5/10
+1000/1000 [==============================] - 51s 51ms/step - loss: 0.3284 - accuracy: 0.8789 - val_loss: 0.2191 - val_accuracy: 0.9168
+Epoch 6/10
+1000/1000 [==============================] - 49s 49ms/step - loss: 0.2621 - accuracy: 0.9069 - val_loss: 0.1625 - val_accuracy: 0.9398
+Epoch 7/10
+1000/1000 [==============================] - 49s 49ms/step - loss: 0.2361 - accuracy: 0.9199 - val_loss: 0.1624 - val_accuracy: 0.9352
+Epoch 8/10
+1000/1000 [==============================] - 49s 49ms/step - loss: 0.1835 - accuracy: 0.9406 - val_loss: 0.1152 - val_accuracy: 0.9603
+Epoch 9/10
+1000/1000 [==============================] - 49s 49ms/step - loss: 0.1582 - accuracy: 0.9484 - val_loss: 0.0740 - val_accuracy: 0.9722
+Epoch 10/10
+1000/1000 [==============================] - 51s 51ms/step - loss: 0.1443 - accuracy: 0.9570 - val_loss: 0.1026 - val_accuracy: 0.9630
+13.5 Results on Test Set
+13.5.1 Accuracy & Loss
+# Evaluate on test set 
+testeval = model_combined_V2B1_rc.evaluate(x_test, y_test, verbose=2)
+
+# Print performance metrics (loss and accuracy)
+print("Test Loss:", testeval[0])
+print("Test Accuracy:", testeval[1])
+64/64 - 3s - loss: 0.1158 - accuracy: 0.9618 - 3s/epoch - 50ms/step
+Test Loss: 0.11579208821058273
+Test Accuracy: 0.9618434309959412
+13.5.2 Scott's Pi
+# Scott's pi function: scotts_pi
+
+# True integer labels: y_test_int
+
+# Convert predicted labels to integers 
+y_pred_combV2B1_rc_int = np.argmax(model_combined_V2B1_rc.predict(x_test), axis=1)
+
+# Calculate confusion matrix
+conf_matrix = confusion_matrix(y_test_int, y_pred_combV2B1_rc_int)
+
+# Calculate Scott's Pi
+pi = scotts_pi(conf_matrix)
+print("Scott's Pi:", pi)
+64/64 [==============================] - 3s 17ms/step
+Scott's Pi: 0.9451692355465221  

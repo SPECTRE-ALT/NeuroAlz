@@ -1,0 +1,469 @@
+Alzheimer's Dataset Detailed Analysis Report - HACKCLUB API
+=========================================================
+
+Image: 00046ff7-0fae-4796-9a2b-2df47095bfe6.jpg
+Predicted Class: Nondemented
+Confidence Profile: Nondemented: 100.0%, Very Mild Demented: 0.0%, Mild Demented: 0.0%, Moderate Demented: 0.0%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    The MRI scan demonstrates a brain with preserved structural integrity, consistent with healthy neurological function. 
+    1.  **Hippocampus**: Retains normal volume and morphology. No signs of localized atrophy.
+    2.  **Structural Integrity**: No evidence of intracranial tumors, mass effect, or acute ischemic stroke.
+    
+    **Analysis of Causality:**
+    The absence of dementia implies that compensatory neural mechanisms are intact and the burden of amyloid-beta and tau proteins has not reached a neurotoxic threshold.
+    
+    **Clinical Status & Prognosis:**
+    *   **Current Symptoms**: None. Cognitive function (memory, executive attention) is within normal limits.
+    *   **Forecast**: Continued healthy aging is expected. Routine monitoring is advised, but no immediate intervention is required.
+    
+--------------------------------------------------
+
+Image: 000cdcc4-3e54-4034-a538-203c8047b564.jpg
+Predicted Class: Very Mild Demented
+Confidence Profile: Nondemented: 5.3%, Very Mild Demented: 94.5%, Mild Demented: 0.2%, Moderate Demented: 0.1%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    The scan reveals the earliest structural markers of neurodegeneration (CDR 0.5), specifically subtle atrophy of the hippocampus and entorhinal cortex.
+    
+    **Etiology (Why this happened):**
+    This stage represents the "tipping point" where the accumulation of misfolded proteins (amyloid plaques outside neurons and tau tangles inside) begins to destroy synapses faster than the brain can repair them. The pathology has likely spread from the transentorhinal region to the hippocampus proper.
+    
+    **Clinical Presentation & Expected Symptoms:**
+    *   **Immediate Symptoms**: "Senior moments" that exceed normal aging—misplacing items, forgetting names of casual acquaintances, or repeating questions.
+    *   **Forecast**: Patients may experience increased anxiety regarding their memory. Logic and personality remain largely intact, but complex planning tasks (finances) may become slightly more difficult.
+    
+--------------------------------------------------
+
+Image: 0013ad52-8398-4892-9fde-060eb1ae956d.jpg
+Predicted Class: Nondemented
+Confidence Profile: Nondemented: 99.0%, Very Mild Demented: 0.0%, Mild Demented: 0.3%, Moderate Demented: 0.7%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    The MRI scan demonstrates a brain with preserved structural integrity, consistent with healthy neurological function. 
+    1.  **Hippocampus**: Retains normal volume and morphology. No signs of localized atrophy.
+    2.  **Structural Integrity**: No evidence of intracranial tumors, mass effect, or acute ischemic stroke.
+    
+    **Analysis of Causality:**
+    The absence of dementia implies that compensatory neural mechanisms are intact and the burden of amyloid-beta and tau proteins has not reached a neurotoxic threshold.
+    
+    **Clinical Status & Prognosis:**
+    *   **Current Symptoms**: None. Cognitive function (memory, executive attention) is within normal limits.
+    *   **Forecast**: Continued healthy aging is expected. Routine monitoring is advised, but no immediate intervention is required.
+    
+--------------------------------------------------
+
+Image: 001f15e8-6ad4-4e7a-bc36-b62b984dad69.jpg
+Predicted Class: Nondemented
+Confidence Profile: Nondemented: 99.9%, Very Mild Demented: 0.0%, Mild Demented: 0.0%, Moderate Demented: 0.1%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    The MRI scan demonstrates a brain with preserved structural integrity, consistent with healthy neurological function. 
+    1.  **Hippocampus**: Retains normal volume and morphology. No signs of localized atrophy.
+    2.  **Structural Integrity**: No evidence of intracranial tumors, mass effect, or acute ischemic stroke.
+    
+    **Analysis of Causality:**
+    The absence of dementia implies that compensatory neural mechanisms are intact and the burden of amyloid-beta and tau proteins has not reached a neurotoxic threshold.
+    
+    **Clinical Status & Prognosis:**
+    *   **Current Symptoms**: None. Cognitive function (memory, executive attention) is within normal limits.
+    *   **Forecast**: Continued healthy aging is expected. Routine monitoring is advised, but no immediate intervention is required.
+    
+--------------------------------------------------
+
+Image: 001f89e3-8207-4ee4-80d7-711c2acd191a.jpg
+Predicted Class: Mild Demented
+Confidence Profile: Nondemented: 2.7%, Very Mild Demented: 0.0%, Mild Demented: 92.6%, Moderate Demented: 4.7%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    Distinct atrophy is visible in the **Medial Temporal** and **Parietal lobes**, with ventricular enlargement (hydrocephalus ex vacuo).
+    
+    **Etiology (Why this happened):**
+    The disease has progressed from cell-to-cell signaling dysfunction to actual cell death (neurodegeneration). The loss of cholinergic neurons in the basal forebrain is reducing the neurotransmitters needed for memory processing. The parietal signs suggest the pathology is moving toward the brain's sensory-integration centers.
+    
+    **Clinical Presentation & Expected Symptoms:**
+    *   **Core Symptoms**: Distinct short-term memory loss (forgetting recent conversations entirely). Disorientation in time/place (getting lost in familiar routes).
+    *   **Emerging Issues**: Difficulty handling money or paying bills. Mood changes (withdrawal or depression) are common.
+    *   **Forecast**: Supervision becomes necessary for complex activities (driving, cooking).
+    
+--------------------------------------------------
+
+Image: 00372fb8-22c8-4a67-8b10-564caed780fa.jpg
+Predicted Class: Nondemented
+Confidence Profile: Nondemented: 100.0%, Very Mild Demented: 0.0%, Mild Demented: 0.0%, Moderate Demented: 0.0%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    The MRI scan demonstrates a brain with preserved structural integrity, consistent with healthy neurological function. 
+    1.  **Hippocampus**: Retains normal volume and morphology. No signs of localized atrophy.
+    2.  **Structural Integrity**: No evidence of intracranial tumors, mass effect, or acute ischemic stroke.
+    
+    **Analysis of Causality:**
+    The absence of dementia implies that compensatory neural mechanisms are intact and the burden of amyloid-beta and tau proteins has not reached a neurotoxic threshold.
+    
+    **Clinical Status & Prognosis:**
+    *   **Current Symptoms**: None. Cognitive function (memory, executive attention) is within normal limits.
+    *   **Forecast**: Continued healthy aging is expected. Routine monitoring is advised, but no immediate intervention is required.
+    
+--------------------------------------------------
+
+Image: 00387cfa-b6ce-4eb0-8cc5-9273080c8187.jpg
+Predicted Class: Nondemented
+Confidence Profile: Nondemented: 91.0%, Very Mild Demented: 0.2%, Mild Demented: 0.1%, Moderate Demented: 8.7%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    The MRI scan demonstrates a brain with preserved structural integrity, consistent with healthy neurological function. 
+    1.  **Hippocampus**: Retains normal volume and morphology. No signs of localized atrophy.
+    2.  **Structural Integrity**: No evidence of intracranial tumors, mass effect, or acute ischemic stroke.
+    
+    **Analysis of Causality:**
+    The absence of dementia implies that compensatory neural mechanisms are intact and the burden of amyloid-beta and tau proteins has not reached a neurotoxic threshold.
+    
+    **Clinical Status & Prognosis:**
+    *   **Current Symptoms**: None. Cognitive function (memory, executive attention) is within normal limits.
+    *   **Forecast**: Continued healthy aging is expected. Routine monitoring is advised, but no immediate intervention is required.
+    
+--------------------------------------------------
+
+Image: 0045bd98-26c5-4bda-b718-8b7ec672f7d6.jpg
+Predicted Class: Nondemented
+Confidence Profile: Nondemented: 100.0%, Very Mild Demented: 0.0%, Mild Demented: 0.0%, Moderate Demented: 0.0%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    The MRI scan demonstrates a brain with preserved structural integrity, consistent with healthy neurological function. 
+    1.  **Hippocampus**: Retains normal volume and morphology. No signs of localized atrophy.
+    2.  **Structural Integrity**: No evidence of intracranial tumors, mass effect, or acute ischemic stroke.
+    
+    **Analysis of Causality:**
+    The absence of dementia implies that compensatory neural mechanisms are intact and the burden of amyloid-beta and tau proteins has not reached a neurotoxic threshold.
+    
+    **Clinical Status & Prognosis:**
+    *   **Current Symptoms**: None. Cognitive function (memory, executive attention) is within normal limits.
+    *   **Forecast**: Continued healthy aging is expected. Routine monitoring is advised, but no immediate intervention is required.
+    
+--------------------------------------------------
+
+Image: 004dd801-1100-4d89-985d-ef65a22eabab.jpg
+Predicted Class: Mild Demented
+Confidence Profile: Nondemented: 1.0%, Very Mild Demented: 0.0%, Mild Demented: 98.8%, Moderate Demented: 0.2%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    Distinct atrophy is visible in the **Medial Temporal** and **Parietal lobes**, with ventricular enlargement (hydrocephalus ex vacuo).
+    
+    **Etiology (Why this happened):**
+    The disease has progressed from cell-to-cell signaling dysfunction to actual cell death (neurodegeneration). The loss of cholinergic neurons in the basal forebrain is reducing the neurotransmitters needed for memory processing. The parietal signs suggest the pathology is moving toward the brain's sensory-integration centers.
+    
+    **Clinical Presentation & Expected Symptoms:**
+    *   **Core Symptoms**: Distinct short-term memory loss (forgetting recent conversations entirely). Disorientation in time/place (getting lost in familiar routes).
+    *   **Emerging Issues**: Difficulty handling money or paying bills. Mood changes (withdrawal or depression) are common.
+    *   **Forecast**: Supervision becomes necessary for complex activities (driving, cooking).
+    
+--------------------------------------------------
+
+Image: 005b6ab6-55f3-426a-a25c-4588182d5c62.jpg
+Predicted Class: Nondemented
+Confidence Profile: Nondemented: 99.8%, Very Mild Demented: 0.1%, Mild Demented: 0.1%, Moderate Demented: 0.0%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    The MRI scan demonstrates a brain with preserved structural integrity, consistent with healthy neurological function. 
+    1.  **Hippocampus**: Retains normal volume and morphology. No signs of localized atrophy.
+    2.  **Structural Integrity**: No evidence of intracranial tumors, mass effect, or acute ischemic stroke.
+    
+    **Analysis of Causality:**
+    The absence of dementia implies that compensatory neural mechanisms are intact and the burden of amyloid-beta and tau proteins has not reached a neurotoxic threshold.
+    
+    **Clinical Status & Prognosis:**
+    *   **Current Symptoms**: None. Cognitive function (memory, executive attention) is within normal limits.
+    *   **Forecast**: Continued healthy aging is expected. Routine monitoring is advised, but no immediate intervention is required.
+    
+--------------------------------------------------
+
+Image: 005e1f97-a264-4abc-9471-420e144946aa.jpg
+Predicted Class: Nondemented
+Confidence Profile: Nondemented: 97.8%, Very Mild Demented: 0.0%, Mild Demented: 2.2%, Moderate Demented: 0.0%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    The MRI scan demonstrates a brain with preserved structural integrity, consistent with healthy neurological function. 
+    1.  **Hippocampus**: Retains normal volume and morphology. No signs of localized atrophy.
+    2.  **Structural Integrity**: No evidence of intracranial tumors, mass effect, or acute ischemic stroke.
+    
+    **Analysis of Causality:**
+    The absence of dementia implies that compensatory neural mechanisms are intact and the burden of amyloid-beta and tau proteins has not reached a neurotoxic threshold.
+    
+    **Clinical Status & Prognosis:**
+    *   **Current Symptoms**: None. Cognitive function (memory, executive attention) is within normal limits.
+    *   **Forecast**: Continued healthy aging is expected. Routine monitoring is advised, but no immediate intervention is required.
+    
+--------------------------------------------------
+
+Image: 00745f1c-727e-4af8-b822-53db70b42b16.jpg
+Predicted Class: Nondemented
+Confidence Profile: Nondemented: 93.9%, Very Mild Demented: 0.0%, Mild Demented: 6.1%, Moderate Demented: 0.0%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    The MRI scan demonstrates a brain with preserved structural integrity, consistent with healthy neurological function. 
+    1.  **Hippocampus**: Retains normal volume and morphology. No signs of localized atrophy.
+    2.  **Structural Integrity**: No evidence of intracranial tumors, mass effect, or acute ischemic stroke.
+    
+    **Analysis of Causality:**
+    The absence of dementia implies that compensatory neural mechanisms are intact and the burden of amyloid-beta and tau proteins has not reached a neurotoxic threshold.
+    
+    **Clinical Status & Prognosis:**
+    *   **Current Symptoms**: None. Cognitive function (memory, executive attention) is within normal limits.
+    *   **Forecast**: Continued healthy aging is expected. Routine monitoring is advised, but no immediate intervention is required.
+    
+--------------------------------------------------
+
+Image: 0076e21b-81ce-43fd-abd0-a52224ef1fa4.jpg
+Predicted Class: Nondemented
+Confidence Profile: Nondemented: 74.1%, Very Mild Demented: 0.1%, Mild Demented: 1.9%, Moderate Demented: 23.9%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    The MRI scan demonstrates a brain with preserved structural integrity, consistent with healthy neurological function. 
+    1.  **Hippocampus**: Retains normal volume and morphology. No signs of localized atrophy.
+    2.  **Structural Integrity**: No evidence of intracranial tumors, mass effect, or acute ischemic stroke.
+    
+    **Analysis of Causality:**
+    The absence of dementia implies that compensatory neural mechanisms are intact and the burden of amyloid-beta and tau proteins has not reached a neurotoxic threshold.
+    
+    **Clinical Status & Prognosis:**
+    *   **Current Symptoms**: None. Cognitive function (memory, executive attention) is within normal limits.
+    *   **Forecast**: Continued healthy aging is expected. Routine monitoring is advised, but no immediate intervention is required.
+    
+--------------------------------------------------
+
+Image: 00a59d3a-8d10-4e10-b5ce-1373a4e89189.jpg
+Predicted Class: Nondemented
+Confidence Profile: Nondemented: 98.5%, Very Mild Demented: 0.1%, Mild Demented: 0.1%, Moderate Demented: 1.3%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    The MRI scan demonstrates a brain with preserved structural integrity, consistent with healthy neurological function. 
+    1.  **Hippocampus**: Retains normal volume and morphology. No signs of localized atrophy.
+    2.  **Structural Integrity**: No evidence of intracranial tumors, mass effect, or acute ischemic stroke.
+    
+    **Analysis of Causality:**
+    The absence of dementia implies that compensatory neural mechanisms are intact and the burden of amyloid-beta and tau proteins has not reached a neurotoxic threshold.
+    
+    **Clinical Status & Prognosis:**
+    *   **Current Symptoms**: None. Cognitive function (memory, executive attention) is within normal limits.
+    *   **Forecast**: Continued healthy aging is expected. Routine monitoring is advised, but no immediate intervention is required.
+    
+--------------------------------------------------
+
+Image: 00a65316-a8c6-46d3-af53-4fdf234d2fcf.jpg
+Predicted Class: Nondemented
+Confidence Profile: Nondemented: 90.7%, Very Mild Demented: 0.1%, Mild Demented: 5.2%, Moderate Demented: 4.0%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    The MRI scan demonstrates a brain with preserved structural integrity, consistent with healthy neurological function. 
+    1.  **Hippocampus**: Retains normal volume and morphology. No signs of localized atrophy.
+    2.  **Structural Integrity**: No evidence of intracranial tumors, mass effect, or acute ischemic stroke.
+    
+    **Analysis of Causality:**
+    The absence of dementia implies that compensatory neural mechanisms are intact and the burden of amyloid-beta and tau proteins has not reached a neurotoxic threshold.
+    
+    **Clinical Status & Prognosis:**
+    *   **Current Symptoms**: None. Cognitive function (memory, executive attention) is within normal limits.
+    *   **Forecast**: Continued healthy aging is expected. Routine monitoring is advised, but no immediate intervention is required.
+    
+--------------------------------------------------
+
+Image: 00bdae8e-7fb7-4dc1-b7aa-7c45d9c46457.jpg
+Predicted Class: Nondemented
+Confidence Profile: Nondemented: 100.0%, Very Mild Demented: 0.0%, Mild Demented: 0.0%, Moderate Demented: 0.0%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    The MRI scan demonstrates a brain with preserved structural integrity, consistent with healthy neurological function. 
+    1.  **Hippocampus**: Retains normal volume and morphology. No signs of localized atrophy.
+    2.  **Structural Integrity**: No evidence of intracranial tumors, mass effect, or acute ischemic stroke.
+    
+    **Analysis of Causality:**
+    The absence of dementia implies that compensatory neural mechanisms are intact and the burden of amyloid-beta and tau proteins has not reached a neurotoxic threshold.
+    
+    **Clinical Status & Prognosis:**
+    *   **Current Symptoms**: None. Cognitive function (memory, executive attention) is within normal limits.
+    *   **Forecast**: Continued healthy aging is expected. Routine monitoring is advised, but no immediate intervention is required.
+    
+--------------------------------------------------
+
+Image: 00ddce1c-fd19-4925-9fa6-addc480a012c.jpg
+Predicted Class: Nondemented
+Confidence Profile: Nondemented: 92.1%, Very Mild Demented: 0.0%, Mild Demented: 7.9%, Moderate Demented: 0.0%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    The MRI scan demonstrates a brain with preserved structural integrity, consistent with healthy neurological function. 
+    1.  **Hippocampus**: Retains normal volume and morphology. No signs of localized atrophy.
+    2.  **Structural Integrity**: No evidence of intracranial tumors, mass effect, or acute ischemic stroke.
+    
+    **Analysis of Causality:**
+    The absence of dementia implies that compensatory neural mechanisms are intact and the burden of amyloid-beta and tau proteins has not reached a neurotoxic threshold.
+    
+    **Clinical Status & Prognosis:**
+    *   **Current Symptoms**: None. Cognitive function (memory, executive attention) is within normal limits.
+    *   **Forecast**: Continued healthy aging is expected. Routine monitoring is advised, but no immediate intervention is required.
+    
+--------------------------------------------------
+
+Image: 00eae021-81e5-4fd2-8daa-f16da1feb99a.jpg
+Predicted Class: Very Mild Demented
+Confidence Profile: Nondemented: 11.8%, Very Mild Demented: 79.4%, Mild Demented: 0.4%, Moderate Demented: 8.5%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    The scan reveals the earliest structural markers of neurodegeneration (CDR 0.5), specifically subtle atrophy of the hippocampus and entorhinal cortex.
+    
+    **Etiology (Why this happened):**
+    This stage represents the "tipping point" where the accumulation of misfolded proteins (amyloid plaques outside neurons and tau tangles inside) begins to destroy synapses faster than the brain can repair them. The pathology has likely spread from the transentorhinal region to the hippocampus proper.
+    
+    **Clinical Presentation & Expected Symptoms:**
+    *   **Immediate Symptoms**: "Senior moments" that exceed normal aging—misplacing items, forgetting names of casual acquaintances, or repeating questions.
+    *   **Forecast**: Patients may experience increased anxiety regarding their memory. Logic and personality remain largely intact, but complex planning tasks (finances) may become slightly more difficult.
+    
+--------------------------------------------------
+
+Image: 00f17d34-5e30-44a2-ad3e-296a70f76ba5.jpg
+Predicted Class: Nondemented
+Confidence Profile: Nondemented: 99.9%, Very Mild Demented: 0.0%, Mild Demented: 0.0%, Moderate Demented: 0.1%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    The MRI scan demonstrates a brain with preserved structural integrity, consistent with healthy neurological function. 
+    1.  **Hippocampus**: Retains normal volume and morphology. No signs of localized atrophy.
+    2.  **Structural Integrity**: No evidence of intracranial tumors, mass effect, or acute ischemic stroke.
+    
+    **Analysis of Causality:**
+    The absence of dementia implies that compensatory neural mechanisms are intact and the burden of amyloid-beta and tau proteins has not reached a neurotoxic threshold.
+    
+    **Clinical Status & Prognosis:**
+    *   **Current Symptoms**: None. Cognitive function (memory, executive attention) is within normal limits.
+    *   **Forecast**: Continued healthy aging is expected. Routine monitoring is advised, but no immediate intervention is required.
+    
+--------------------------------------------------
+
+Image: 011a21b2-b517-4fb8-a4f0-bccd82cfe751.jpg
+Predicted Class: Nondemented
+Confidence Profile: Nondemented: 99.3%, Very Mild Demented: 0.0%, Mild Demented: 0.6%, Moderate Demented: 0.1%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    The MRI scan demonstrates a brain with preserved structural integrity, consistent with healthy neurological function. 
+    1.  **Hippocampus**: Retains normal volume and morphology. No signs of localized atrophy.
+    2.  **Structural Integrity**: No evidence of intracranial tumors, mass effect, or acute ischemic stroke.
+    
+    **Analysis of Causality:**
+    The absence of dementia implies that compensatory neural mechanisms are intact and the burden of amyloid-beta and tau proteins has not reached a neurotoxic threshold.
+    
+    **Clinical Status & Prognosis:**
+    *   **Current Symptoms**: None. Cognitive function (memory, executive attention) is within normal limits.
+    *   **Forecast**: Continued healthy aging is expected. Routine monitoring is advised, but no immediate intervention is required.
+    
+--------------------------------------------------
+
+Image: 0123733a-36a6-498c-b310-9366879b874e.jpg
+Predicted Class: Moderate Demented
+Confidence Profile: Nondemented: 0.0%, Very Mild Demented: 0.0%, Mild Demented: 0.0%, Moderate Demented: 100.0%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    Severe structural compromise (CDR 2) is evident. Widespread cortical thinning affects the **Temporal, Parietal, and Frontal lobes**.
+    
+    **Etiology (Why this happened):**
+    This advanced stage indicates that neurofibrillary tangles have invaded the neocortex (Braak Stages V-VI). The massive loss of cortical tissue disconnects critical networks responsible for reasoning and self-awareness. Inflammation (gliosis) is actively accelerating tissue loss.
+    
+    **Clinical Presentation & Expected Symptoms:**
+    *   **Severe Deficits**: Profound memory loss (including earlier life events). Difficulty recognizing family members or close friends.
+    *   **Behavioral Changes**: Wandering, sundowning (agitation at night), and potential hallucinations or delusions.
+    *   **Physical**: Loss of bladder control or fine motor skills (e.g., buttoning a shirt) may begin to appear.
+    
+--------------------------------------------------
+
+Image: 01259f4a-2b71-4571-b6de-026d7827292f.jpg
+Predicted Class: Nondemented
+Confidence Profile: Nondemented: 99.0%, Very Mild Demented: 0.6%, Mild Demented: 0.1%, Moderate Demented: 0.3%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    The MRI scan demonstrates a brain with preserved structural integrity, consistent with healthy neurological function. 
+    1.  **Hippocampus**: Retains normal volume and morphology. No signs of localized atrophy.
+    2.  **Structural Integrity**: No evidence of intracranial tumors, mass effect, or acute ischemic stroke.
+    
+    **Analysis of Causality:**
+    The absence of dementia implies that compensatory neural mechanisms are intact and the burden of amyloid-beta and tau proteins has not reached a neurotoxic threshold.
+    
+    **Clinical Status & Prognosis:**
+    *   **Current Symptoms**: None. Cognitive function (memory, executive attention) is within normal limits.
+    *   **Forecast**: Continued healthy aging is expected. Routine monitoring is advised, but no immediate intervention is required.
+    
+--------------------------------------------------
+
+Image: 012668ba-51a4-41d2-9755-caade71cd418.jpg
+Predicted Class: Nondemented
+Confidence Profile: Nondemented: 87.1%, Very Mild Demented: 8.4%, Mild Demented: 1.0%, Moderate Demented: 3.5%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    The MRI scan demonstrates a brain with preserved structural integrity, consistent with healthy neurological function. 
+    1.  **Hippocampus**: Retains normal volume and morphology. No signs of localized atrophy.
+    2.  **Structural Integrity**: No evidence of intracranial tumors, mass effect, or acute ischemic stroke.
+    
+    **Analysis of Causality:**
+    The absence of dementia implies that compensatory neural mechanisms are intact and the burden of amyloid-beta and tau proteins has not reached a neurotoxic threshold.
+    
+    **Clinical Status & Prognosis:**
+    *   **Current Symptoms**: None. Cognitive function (memory, executive attention) is within normal limits.
+    *   **Forecast**: Continued healthy aging is expected. Routine monitoring is advised, but no immediate intervention is required.
+    
+--------------------------------------------------
+
+Image: 016598ae-e1b8-48b1-bee7-1dc3f8a9b1a3.jpg
+Predicted Class: Mild Demented
+Confidence Profile: Nondemented: 34.3%, Very Mild Demented: 0.1%, Mild Demented: 65.6%, Moderate Demented: 0.0%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    Distinct atrophy is visible in the **Medial Temporal** and **Parietal lobes**, with ventricular enlargement (hydrocephalus ex vacuo).
+    
+    **Etiology (Why this happened):**
+    The disease has progressed from cell-to-cell signaling dysfunction to actual cell death (neurodegeneration). The loss of cholinergic neurons in the basal forebrain is reducing the neurotransmitters needed for memory processing. The parietal signs suggest the pathology is moving toward the brain's sensory-integration centers.
+    
+    **Clinical Presentation & Expected Symptoms:**
+    *   **Core Symptoms**: Distinct short-term memory loss (forgetting recent conversations entirely). Disorientation in time/place (getting lost in familiar routes).
+    *   **Emerging Issues**: Difficulty handling money or paying bills. Mood changes (withdrawal or depression) are common.
+    *   **Forecast**: Supervision becomes necessary for complex activities (driving, cooking).
+    
+--------------------------------------------------
+
+Image: 016ba251-27e0-450b-86b5-8150e569733f.jpg
+Predicted Class: Moderate Demented
+Confidence Profile: Nondemented: 7.4%, Very Mild Demented: 0.0%, Mild Demented: 0.0%, Moderate Demented: 92.6%
+Neuroradiologist Findings (Via HackClub API):
+
+    **Biological & Anatomical Analysis:**
+    Severe structural compromise (CDR 2) is evident. Widespread cortical thinning affects the **Temporal, Parietal, and Frontal lobes**.
+    
+    **Etiology (Why this happened):**
+    This advanced stage indicates that neurofibrillary tangles have invaded the neocortex (Braak Stages V-VI). The massive loss of cortical tissue disconnects critical networks responsible for reasoning and self-awareness. Inflammation (gliosis) is actively accelerating tissue loss.
+    
+    **Clinical Presentation & Expected Symptoms:**
+    *   **Severe Deficits**: Profound memory loss (including earlier life events). Difficulty recognizing family members or close friends.
+    *   **Behavioral Changes**: Wandering, sundowning (agitation at night), and potential hallucinations or delusions.
+    *   **Physical**: Loss of bladder control or fine motor skills (e.g., buttoning a shirt) may begin to appear.
+    
+--------------------------------------------------
+

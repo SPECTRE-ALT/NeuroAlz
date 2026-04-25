@@ -1,0 +1,4 @@
+/data
+/venv
+# Ignore __pycache__ folders in all paths
+__pycache__/

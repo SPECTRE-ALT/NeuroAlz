@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroAlz - Cognitive Health</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@700&family=JetBrains+Mono:wght@500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #000000;
+            --accent: #2563eb;
+            /* Blue for 'ai' */
+            --bg-color: #f8fafc;
+            /* Slate 50 */
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --error: #ef4444;
+            --radius: 12px;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.01);
+            padding: 2.5rem;
+            text-align: left;
+            transition: max-width 0.3s ease;
+        }
+
+        .container.wide {
+            max-width: 800px;
+        }
+
+        /* Tabs Navigation */
+        .tabs-nav {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            background: #f1f5f9;
+            padding: 0.5rem;
+            border-radius: 12px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: none;
+            background: none;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .tab-btn.active {
+            background: #ffffff;
+            color: var(--accent);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Game UI */
+        .game-card {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 300px;
+            margin: 1.5rem auto;
+        }
+
+        .grid-tile {
+            aspect-ratio: 1;
+            background: #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .grid-tile.active {
+            background: var(--accent);
+        }
+
+        .grid-tile.wrong {
+            background: var(--error);
+        }
+
+        .game-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .assessment-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* NEW GAME STYLES */
+        .game-select-btn {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .game-select-btn:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .game-select-btn.active {
+            border: 2px solid var(--accent);
+            background: #eff6ff;
+        }
+
+        .icon-box {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stat-pill {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            color: #cbd5e1;
+        }
+
+        /* REFLEX GAME STATES */
+        .reflex-waiting {
+            background: #ef4444 !important;
+            color: white;
+        }
+
+        .reflex-ready {
+            background: #22c55e !important;
+            color: white;
+        }
+
+        .reflex-clicked {
+            background: #3b82f6 !important;
+            color: white;
+        }
+
+        /* Logo Area */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 3rem;
+        }
+
+        .logo-mark {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 2.5rem;
+            margin-right: 0.5rem;
+            line-height: 1;
+        }
+
+        .logo-text {
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 1.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-ai {
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        /* File Upload */
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #fdfdfd;
+        }
+
+        .upload-area:hover,
+        .upload-area.drag-over {
+            border-color: var(--accent);
+            background: #eff6ff;
+        }
+
+        .upload-icon {
+            font-size: 2rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .file-name {
+            font-size: 0.85rem;
+            color: var(--text-main);
+            font-weight: 600;
+            margin-top: 0.5rem;
+            display: block;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        #preview-image {
+            max-width: 100%;
+            height: auto;
+            max-height: 200px;
+            border-radius: var(--radius);
+            margin-top: 1rem;
+            display: none;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        /* Button */
+        button {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.1s ease, box-shadow 0.2s;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background-color: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Results */
+        #result-container {
+            margin-top: 2rem;
+            border-top: 1px solid var(--border);
+            padding-top: 2rem;
+            display: none;
+        }
+
+        .result-header {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .diagnosis-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .status-dot.positive {
+            background: var(--error);
+        }
+
+        .status-dot.negative {
+            background: var(--success);
+        }
+
+        .ai-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-top: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .ai-card h3 {
+            margin: 0 0 0.75rem 0;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .ai-reasoning {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-main);
+            white-space: pre-wrap;
+        }
+
+        .confidence-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px dashed var(--border);
+            color: var(--text-muted);
+        }
+
+        /* Spinner */
+        .spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- Logo Removed -->
+
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <h2 style="font-weight: 600; margin-bottom: 0.5rem; font-size: 1.8rem;">Neuro<span
+                    class="logo-ai">Alz</span></h2>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">Comprehensive Alzheimer's Screening
+                Suite</p>
+        </div>
+
+        <div class="tabs-nav">
+            <button class="tab-btn active" onclick="switchTab('mri')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                </svg>
+                MRI Analysis
+            </button>
+            <button class="tab-btn" onclick="switchTab('games')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="6" y1="3" x2="6" y2="15" />
+                    <circle cx="18" cy="6" r="3" />
+                    <circle cx="6" cy="18" r="3" />
+                    <path d="M18 9a9 9 0 0 1-9 9" />
+                </svg>
+                Cognitive Games
+            </button>
+            <button class="tab-btn" onclick="switchTab('assess')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                </svg>
+                Risk Profile
+            </button>
+        </div>
+
+        <!-- MRI SECTION -->
+        <div id="mri-tab" class="tab-content active">
+            <form id="uploadForm">
+                <div class="form-group">
+                    <label>Upload Brain MRI Scan</label>
+                    <div class="upload-area" id="dropZone">
+                        <div class="upload-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="17 8 12 3 7 8" />
+                                <line x1="12" y1="3" x2="12" y2="15" />
+                            </svg>
+                        </div>
+                        <p class="upload-text">Drag & drop or click to upload MRI</p>
+                        <span id="fileName" class="file-name"></span>
+                        <input type="file" name="file" id="fileInput" accept=".png,.jpg,.jpeg" required>
+                    </div>
+                </div>
+
+                <img id="preview-image" alt="MRI Preview">
+
+                <div id="error-message" class="error-badge"></div>
+
+                <button type="submit" id="submitBtn" class="btn btn-primary" disabled>
+                    Run Clinical Analysis
+                </button>
+            </form>
+
+            <div id="result-container">
+                <div class="result-header">Diagnosis Result</div>
+                <div class="diagnosis-title">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="resultLabel">--</span>
+                </div>
+
+                <div id="details-list" style="margin-bottom: 1.5rem;"></div>
+
+                <div class="ai-card" id="ai-container" style="display: none;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="margin: 0;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path
+                                    d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                            </svg>
+                            Clinical Assessment
+                        </h3>
+                        <div style="display: flex; gap: 0.5rem; background: #e2e8f0; padding: 4px; border-radius: 8px;">
+                            <button type="button" id="btnSummary" class="toggle-mode"
+                                style="margin: 0; padding: 4px 12px; font-size: 0.8rem; width: auto; background: transparent; color: #64748b; box-shadow: none;">Summary</button>
+                            <button type="button" id="btnDetailed" class="toggle-mode active"
+                                style="margin: 0; padding: 4px 12px; font-size: 0.8rem; width: auto; background: white; color: black; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">Detailed</button>
+                        </div>
+                    </div>
+                    <div class="ai-reasoning" id="reasoningText"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADVANCED NEURO GAMES SECTION -->
+        <div id="games-tab" class="tab-content">
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+                <!-- NEURO-DASHBOARD -->
+                <div class="game-card"
+                    style="margin:0; text-align:left; background: #0f172a; color: white; border:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start">
+                        <div>
+                            <h3 style="margin:0 0 0.5rem 0; color: #fff;">Neuro-Score</h3>
+                            <p style="font-size:0.8rem; color: #94a3b8; margin:0;">Real-time Brain Health Metric</p>
+                        </div>
+                        <div
+                            style="background:rgba(255,255,255,0.1); padding:5px 10px; border-radius:20px; font-size:0.8rem">
+                            BETA</div>
+                    </div>
+
+                    <div style="margin-top:1.5rem; text-align:center;">
+                        <div
+                            style="font-size:3.5rem; font-weight:700; background: -webkit-linear-gradient(45deg, #60a5fa, #c084fc); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+                            <span id="totalNeuroScore">--</span>
+                        </div>
+                        <div style="font-size:0.9rem; color:#94a3b8">/ 100 Points</div>
+                    </div>
+
+                    <div style="margin-top:1.5rem; display:flex; gap:0.5rem; justify-content:center">
+                        <span class="stat-pill">⚡ Reflex: <span id="reflexStat">--</span>ms</span>
+                        <span class="stat-pill">🧠 Memory: <span id="memoryStat">--</span></span>
+                    </div>
+                </div>
+
+                <!-- GAME SELECTOR -->
+                <div style="display:flex; flex-direction:column; gap:1rem;">
+                    <button class="game-select-btn active" onclick="showGame('memory')">
+                        <div class="icon-box" style="background:#e0f2fe; color:#0284c7">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                            </svg>
+                        </div>
+                        <div style="text-align:left">
+                            <div style="font-weight:600; font-size:0.95rem">Memory Sequence</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted)">Hippocampal Function</div>
+                        </div>
+                    </button>
+
+                    <button class="game-select-btn" onclick="showGame('reflex')">
+                        <div class="icon-box" style="background:#fef2f2; color:#dc2626">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                            </svg>
+                        </div>
+                        <div style="text-align:left">
+                            <div style="font-weight:600; font-size:0.95rem">Neural Reflex</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted)">Processing Speed</div>
+                        </div>
+                    </button>
+                    <!-- STORY MEMORY GAME BUTTON -->
+                    <button class="game-select-btn" onclick="showGame('story')">
+                        <div class="icon-box" style="background:#f0fdf4; color:#16a34a">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                            </svg>
+                        </div>
+                        <div style="text-align:left">
+                            <div style="font-weight:600; font-size:0.95rem">Story Recall</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted)">Verbal Memory</div>
+                        </div>
+                    </button>
+                    <!-- 20 QUESTIONS GAME BUTTON -->
+                    <button class="game-select-btn" onclick="showGame('questions')">
+                        <div class="icon-box" style="background:#fff7ed; color:#ea580c">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                        </div>
+                        <div style="text-align:left">
+                            <div style="font-weight:600; font-size:0.95rem">Word Guess</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted)">Logic & Reasoning</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- MEMORY GAME CONTAINER -->
+            <div id="game-memory" class="active-game-view">
+                <div class="game-card">
+                    <h3 style="margin-top:0">Sequence Memory Test</h3>
+                    <p style="font-size:0.9rem; color:var(--text-muted)">Repeat the pattern. Advanced Pattern
+                        Recognition.</p>
+                    <div class="game-grid" id="tileGrid">
+                        <div class="grid-tile" data-index="0"></div>
+                        <div class="grid-tile" data-index="1"></div>
+                        <div class="grid-tile" data-index="2"></div>
+                        <div class="grid-tile" data-index="3"></div>
+                        <div class="grid-tile" data-index="4"></div>
+                        <div class="grid-tile" data-index="5"></div>
+                        <div class="grid-tile" data-index="6"></div>
+                        <div class="grid-tile" data-index="7"></div>
+                        <div class="grid-tile" data-index="8"></div>
+                    </div>
+                    <button id="startGameBtn" class="btn btn-primary"
+                        style="width:auto; padding: 0.75rem 2rem;">Initialize Test</button>
+                    <div class="game-stats">
+                        <div>Level: <b id="gameLevel">0</b></div>
+                        <div>Best: <b id="highScore">0</b></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REFLEX GAME CONTAINER -->
+            <div id="game-reflex" class="active-game-view" style="display:none">
+                <div class="game-card"
+                    style="height: 380px; display:flex; flex-direction:column; justify-content:center; align-items:center; position:relative;">
+                    <div id="reflexArea"
+                        style="width:100%; height:100%; border-radius:12px; background:#f1f5f9; display:flex; flex-direction:column; justify-content:center; align-items:center; cursor:pointer; transition:all 0.1s">
+                        <div id="reflexIcon" style="font-size:3rem; margin-bottom:1rem">⚡</div>
+                        <h3 id="reflexMainText" style="margin:0">Tap to Start</h3>
+                        <p id="reflexSubText" style="margin:0.5rem 0 0 0; color:var(--text-muted)">Wait for Green...</p>
+                    </div>
+                    <div class="game-stats" style="width:100%; margin-top:1rem">
+                        <div>Last: <b id="lastReflex">--</b>ms</div>
+                        <div>Best: <b id="bestReflex">--</b>ms</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STORY GAME CONTAINER -->
+            <div id="game-story" class="active-game-view" style="display:none">
+                <div class="game-card">
+                    <div id="story-intro">
+                        <h3 style="margin-top:0">Story Recall Test</h3>
+                        <p style="color:var(--text-muted)">Read the short story carefully. You will have 20 seconds to
+                            memorize the details before the quiz begins.</p>
+                        <button onclick="startStoryGame()" class="btn btn-primary" style="margin-top:2rem">Start
+                            Story</button>
+                    </div>
+
+                    <div id="story-content" style="display:none; text-align:left">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem">
+                            <h3 id="story-title" style="color:var(--accent); margin:0">Title</h3>
+                            <span id="story-timer" style="font-weight:bold; color:#ef4444">Time remaining: 20s</span>
+                        </div>
+                        <p id="story-text"
+                            style="font-size:1.1rem; line-height:1.6; background:#f8fafc; padding:1.5rem; border-radius:12px; border:1px solid var(--border)">
+                            ...</p>
+                    </div>
+
+                    <div id="story-quiz" style="display:none; text-align:left">
+                        <h3>Quiz Time!</h3>
+                        <p id="quiz-question" style="font-weight:600; font-size:1.1rem">Question?</p>
+                        <div id="quiz-options" style="display:flex; flex-direction:column;"></div>
+                    </div>
+
+                    <div class="game-stats" style="margin-top:2rem">
+                        <div>Score: <b id="storyStat">--</b></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 20 QUESTIONS GAME CONTAINER -->
+        <div id="game-questions" class="active-game-view" style="display:none">
+            <div class="game-card">
+                <div id="questions-intro">
+                    <h3 style="margin-top:0">Word Guess (20 Questions)</h3>
+                    <p style="color:var(--text-muted)">I am thinking of a word. You have 20 chances to guess it. Ask for
+                        hints if you are stuck!</p>
+                    <button onclick="startQuestionGame()" class="btn btn-primary" style="margin-top:2rem">Start
+                        Guessing</button>
+                </div>
+
+                <div id="questions-play" style="display:none; text-align:left">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:1rem; align-items:center;">
+                        <span style="font-weight:bold; color:var(--accent); font-size:1.1rem">Topic: <span
+                                id="qTopic">--</span></span>
+                        <div style="font-size:0.9rem">
+                            <span style="margin-right:1rem">Questions Left: <b id="qChances"
+                                    style="color:#ef4444">20</b></span>
+                            <span>Hints: <b id="qHintsLeft" style="color:#eab308">5</b></span>
+                        </div>
+                    </div>
+
+                    <!-- Chat History Area -->
+                    <div id="qChatArea"
+                        style="background:#f8fafc; height:300px; overflow-y:auto; padding:1rem; border-radius:12px; border:1px solid var(--border); margin-bottom:1rem; display:flex; flex-direction:column; gap:0.5rem;">
+                        <div class="chat-msg ai">I am thinking of a object. Ask me a yes/no question!</div>
+                    </div>
+
+                    <div style="display:flex; gap:0.5rem">
+                        <input type="text" id="qInput" class="btn"
+                            style="background:#fff; border:1px solid var(--border); color:var(--text-main); text-align:left; cursor:text; flex-grow:1"
+                            placeholder="Ask a Yes/No question...">
+                        <button onclick="submitQuestion()" id="qSubmitBtn" class="btn btn-primary"
+                            style="width:auto">Ask</button>
+                    </div>
+
+                    <!-- SEPARATOR -->
+                    <div
+                        style="margin: 1.5rem 0; text-align:center; color:var(--text-muted); font-size:0.8rem; position:relative;">
+                        <span style="background:#fff; padding:0 10px; position:relative; z-index:1">OR</span>
+                        <div
+                            style="position:absolute; top:50%; left:0; width:100%; height:1px; background:var(--border);">
+                        </div>
+                    </div>
+
+                    <!-- FINAL GUESS INPUT -->
+                    <div style="display:flex; gap:0.5rem; align-items:center">
+                        <input type="text" id="qGuessInput" class="btn"
+                            style="background:#f0fdf4; border:1px solid #bbf7d0; color:var(--text-main); text-align:left; cursor:text; flex-grow:1"
+                            placeholder="Type the EXACT answer here...">
+                        <button onclick="submitFinalGuess()" id="qGuessBtn" class="btn btn-primary"
+                            style="width:auto; background:#16a34a; border-color:#16a34a">Solve Quote</button>
+                    </div>
+                    <div style="font-size:0.75rem; color:#ef4444; margin-top:0.25rem;">* Incorrect solve attempts cost 3
+                        chances!</div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem">
+                        <button onclick="getHint()" class="btn"
+                            style="width:auto; font-size:0.85rem; padding:0.4rem 1rem; background:#fff7ed; color:#ea580c; border:1px solid #fed7aa">💡
+                            Get Hint (Costs 1 Hint)</button>
+                        <span id="qFeedback" style="font-size:0.85rem; font-weight:bold; color:#ef4444"></span>
+                    </div>
+                </div>
+
+                <div id="questions-end" style="display:none">
+                    <h3 id="qEndTitle">Game Over</h3>
+                    <p id="qEndMessage">The word was: ...</p>
+                    <button onclick="startQuestionGame()" class="btn btn-primary">Play Again</button>
+                </div>
+
+                <div class="game-stats" style="margin-top:2rem">
+                    <div>Score: <b id="questionStat">0</b></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RECOMMENDED GAMES MINI-SECTION -->
+        <div style="margin-top:1rem; padding:1rem; background:#fff; border-radius:12px; border:1px solid var(--border)">
+            <h4 style="margin:0 0 0.5rem 0">More Recommended Games</h4>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap">
+                <span class="stat-pill" style="color:#64748b; background:#f1f5f9">♟️ Checkers</span>
+                <span class="stat-pill" style="color:#64748b; background:#f1f5f9">🀄 Mahjong</span>
+                <span class="stat-pill" style="color:#64748b; background:#f1f5f9">🔴 Connect 4</span>
+                <span class="stat-pill" style="color:#64748b; background:#f1f5f9">🎲 Rummikub</span>
+                <span class="stat-pill" style="color:#64748b; background:#f1f5f9">🔢 Sudoku</span>
+            </div>
+        </div>
+
+        <div class="ai-card" style="margin-top:1rem">
+            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                </svg>AI Neuro-Analysis</h3>
+            <p id="gameInsight" style="font-size: 0.9rem; margin:0">Complete both modules to generate a full brain
+                health report.</p>
+        </div>
+
+
+        <!-- NEW INFO SECTION -->
+    </div>
+
+    <!-- ASSESSMENT SECTION (Redesigned 2-Column) -->
+    <div id="assess-tab" class="tab-content">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem; align-items: start;">
+
+            <!-- LEFT PANEL: Context & Science -->
+            <div class="left-panel">
+                <div
+                    style="background:#f8fafc; padding:1.5rem; border-radius:12px; border:1px solid var(--border); position:sticky; top:1rem;">
+                    <h3 style="display:flex; align-items:center; gap:0.5rem; font-size:1.1rem; margin-top:0;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2a10 10 0 0 1 10 10 10 10 0 0 1-10 10 10 10 0 0 1-10-10 10 10 0 0 1 10-10z" />
+                            <circle cx="12" cy="12" r="3" />
+                            <path d="M12 2v2" />
+                            <path d="M12 20v2" />
+                            <path d="M2 12h2" />
+                            <path d="M20 12h2" />
+                        </svg>
+                        Cognitive Science
+                    </h3>
+
+                    <div style="font-size: 0.9rem; line-height: 1.6; color: var(--text-main);">
+                        <p><strong>Why Risk Assessment?</strong><br>
+                            Early detection is key. This tool acts as a "Screening Engine" by correlating your lifestyle
+                            data with 2,000+ clinical records from the OASIS Alzheimer's dataset.</p>
+
+                        <div
+                            style="margin: 1rem 0; padding:1rem; background:#fff; border-radius:8px; border:1px solid #e2e8f0;">
+                            <strong style="color:var(--accent); display:block; margin-bottom:0.5rem">Brain Health
+                                Tips:</strong>
+                            <ul style="padding-left:1rem; margin:0; font-size:0.85rem; color:var(--text-muted)">
+                                <li>🧩 <strong>Word Puzzles:</strong> Build neural pathways.</li>
+                                <li>🃏 <strong>Card Games:</strong> Improve executive function.</li>
+                                <li>🥦 <strong>Diet:</strong> Mediterranean diet reduces risk.</li>
+                                <li>🏃 <strong>Exercise:</strong> 150 mins/week is recommended.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL: Form inputs (The "Page on the Right") -->
+            <div class="right-panel">
+                <h3 style="margin-top:0;">Risk Profile Data</h3>
+                <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1.5rem">
+                    Fill in your details to generate a comprehensive risk report.
+                </p>
+
+                <div class="assessment-grid">
+                    <div class="form-group">
+                        <label>Age</label>
+                        <input type="number" id="age" class="btn"
+                            style="background:#fff; border:1px solid var(--border); color:var(--text-main); text-align:left"
+                            placeholder="e.g. 72">
+                    </div>
+                    <div class="form-group">
+                        <label>Education (Years)</label>
+                        <input type="number" id="education" class="btn"
+                            style="background:#fff; border:1px solid var(--border); color:var(--text-main); text-align:left"
+                            placeholder="e.g. 16">
+                    </div>
+                    <div class="form-group">
+                        <label>BMI</label>
+                        <input type="number" id="bmi" class="btn"
+                            style="background:#fff; border:1px solid var(--border); color:var(--text-main); text-align:left"
+                            placeholder="e.g. 24.5">
+                    </div>
+                    <div class="form-group">
+                        <label>Alcohol (Units/wk)</label>
+                        <input type="number" id="alcohol" class="btn"
+                            style="background:#fff; border:1px solid var(--border); color:var(--text-main); text-align:left"
+                            placeholder="e.g. 2">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top:1rem">
+                    <label>Lifestyle Factors</label>
+                    <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                        <label
+                            style="display:flex; align-items:center; gap:5px; background:#f1f5f9; padding:5px 10px; border-radius:20px; cursor:pointer">
+                            <input type="checkbox" id="smoking"> Smoking
+                        </label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; background:#f1f5f9; padding:5px 10px; border-radius:20px; cursor:pointer">
+                            <input type="checkbox" id="diabetes"> Diabetes
+                        </label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; background:#f1f5f9; padding:5px 10px; border-radius:20px; cursor:pointer">
+                            <input type="checkbox" id="hypertension"> Hypertension
+                        </label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; background:#f1f5f9; padding:5px 10px; border-radius:20px; cursor:pointer">
+                            <input type="checkbox" id="familyHistory"> Family History
+                        </label>
+                    </div>
+                </div>
+
+                <div class="assessment-grid"
+                    style="margin-top:1rem; padding-top:1rem; border-top:1px dashed var(--border)">
+                    <div class="form-group">
+                        <label>Sleep (Hrs/Night)</label>
+                        <input type="number" id="sleep" class="btn"
+                            style="background:#fff; border:1px solid var(--border); color:var(--text-main); text-align:left"
+                            placeholder="e.g. 7">
+                    </div>
+                    <div class="form-group">
+                        <label>Exercise (Hrs/Wk)</label>
+                        <input type="number" id="exercise" class="btn"
+                            style="background:#fff; border:1px solid var(--border); color:var(--text-main); text-align:left"
+                            placeholder="e.g. 3">
+                    </div>
+                    <div class="form-group">
+                        <label>Diet Score (1-10)</label>
+                        <input type="number" id="diet" class="btn"
+                            style="background:#fff; border:1px solid var(--border); color:var(--text-main); text-align:left"
+                            placeholder="e.g. 8">
+                    </div>
+                    <div class="form-group">
+                        <label>Systolic BP</label>
+                        <input type="number" id="bp" class="btn"
+                            style="background:#fff; border:1px solid var(--border); color:var(--text-main); text-align:left"
+                            placeholder="e.g. 120">
+                    </div>
+                    <div class="form-group">
+                        <label>Cholesterol</label>
+                        <input type="number" id="cholesterol" class="btn"
+                            style="background:#fff; border:1px solid var(--border); color:var(--text-main); text-align:left"
+                            placeholder="e.g. 190">
+                    </div>
+                    <div class="form-group">
+                        <label>Stress (1-10)</label>
+                        <input type="number" id="stress" class="btn"
+                            style="background:#fff; border:1px solid var(--border); color:var(--text-main); text-align:left"
+                            placeholder="e.g. 4">
+                    </div>
+                </div>
+
+                <!-- External Games Log -->
+                <div
+                    style="margin: 1.5rem 0; padding: 1rem; background: #fff; border: 1px solid var(--border); border-radius: 12px;">
+                    <h4 style="margin:0 0 1rem 0; font-size:0.95rem">External Game Activity Log</h4>
+                    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem">Please check if you have
+                        played any of these games recently to include them in your cognitive profile:</p>
+                    <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                        <label
+                            style="display:flex; align-items:center; gap:5px; padding:5px 10px; background:#f8fafc; border-radius:15px; cursor:pointer"><input
+                                type="checkbox" id="played_sudoku" onchange="updateNeuroScore()"> Sudoku</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; padding:5px 10px; background:#f8fafc; border-radius:15px; cursor:pointer"><input
+                                type="checkbox" id="played_c4" onchange="updateNeuroScore()"> Connect 4</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; padding:5px 10px; background:#f8fafc; border-radius:15px; cursor:pointer"><input
+                                type="checkbox" id="played_mahjong" onchange="updateNeuroScore()"> Mahjong</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; padding:5px 10px; background:#f8fafc; border-radius:15px; cursor:pointer"><input
+                                type="checkbox" id="played_checkers" onchange="updateNeuroScore()"> Checkers</label>
+                        <label
+                            style="display:flex; align-items:center; gap:5px; padding:5px 10px; background:#f8fafc; border-radius:15px; cursor:pointer"><input
+                                type="checkbox" id="played_rummikub" onchange="updateNeuroScore()"> Rummikub</label>
+                    </div>
+                </div>
+
+                <div
+                    style="margin-top:2rem; padding:1rem; background:#fef2f2; border:1px solid #fee2e2; border-radius:8px; color:#991b1b; font-size:0.85rem; line-height:1.5">
+                    <strong>⚠️ DISCLAIMER:</strong> This analysis is NOT 100% accurate. This application is a screening
+                    and
+                    educational tool only. It does not provide a medical diagnosis. Please consult a qualified
+                    healthcare
+                    professional for a comprehensive evaluation.
+                </div>
+
+                <button type="button" onclick="calculateRisk()" id="riskBtn" class="btn btn-primary">
+                    Analyze Risk Profile
+                </button>
+
+                <div id="riskResult" class="ai-card" style="display:none">
+                    <h3>Risk Score: <span id="riskScore">--</span>%</h3>
+                    <p id="riskSummary" class="ai-reasoning"></p>
+                </div>
+            </div>
+
+
+
+        </div>
+
+        <script>
+            // TAB SWITCHING
+            function switchTab(tab) {
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+                const btn = document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`);
+                btn.classList.add('active');
+                document.getElementById(`${tab}-tab`).classList.add('active');
+
+                // Layout adjustments
+                const container = document.querySelector('.container');
+                if (tab === 'games' || tab === 'mri') {
+                    container.classList.add('wide');
+                } else {
+                    container.classList.remove('wide');
+                }
+            }
+
+            // SEQUENCE MEMORY GAME
+
+            // GAME SUITE LOGIC
+
+            // GAME SUITE LOGIC
+
+            function showGame(gameType) {
+                // UI Toggle
+                document.querySelectorAll('.game-select-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.active-game-view').forEach(v => v.style.display = 'none');
+
+                if (gameType === 'memory') {
+                    document.getElementById('game-memory').style.display = 'block';
+                    document.querySelector('.game-select-btn[onclick="showGame(\'memory\')"]').classList.add('active');
+                } else if (gameType === 'reflex') {
+                    document.getElementById('game-reflex').style.display = 'block';
+                    document.querySelector('.game-select-btn[onclick="showGame(\'reflex\')"]').classList.add('active');
+                } else if (gameType === 'story') {
+                    document.getElementById('game-story').style.display = 'block';
+                    document.querySelector('.game-select-btn[onclick="showGame(\'story\')"]').classList.add('active');
+                } else {
+                    document.getElementById('game-questions').style.display = 'block';
+                    document.querySelector('.game-select-btn[onclick="showGame(\'questions\')"]').classList.add('active');
+                }
+            }
+
+            // --- 20 QUESTIONS / WORD GUESS GAME ---
+            const questionWords = [
+                { word: "Apple", category: "Food", hints: ["I am a fruit.", "I can be red, green, or yellow.", "I grow on trees.", "You can make pie with me.", "Snow White ate a poisoned one."] },
+                { word: "Clock", category: "Household Object", hints: ["I have a face but no eyes.", "I have hands but no arms.", "I tell you the time.", "I can hang on a wall.", "I tick and tock."] },
+                { word: "Dog", category: "Animal", hints: ["I am a popular pet.", "I have four legs.", "I bark.", "I love to chase balls.", "I am known as man's best friend."] },
+                { word: "Car", category: "Vehicle", hints: ["I have four wheels.", "I take you places.", "I need fuel or battery.", "You steer me with a wheel.", "I have headlights."] },
+                { word: "Key", category: "Household Object", hints: ["I am made of metal.", "I have teeth but no mouth.", "I unlock doors.", "I fit in a pocket.", "You turn me to start a car."] },
+                { word: "Book", category: "Object", hints: ["I have pages.", "I have a spine but no bones.", "You read me.", "I can tell a story.", "I can be hardcover or paperback."] },
+                { word: "Sun", category: "Nature", hints: ["I am very hot.", "I am a star.", "I rise in the east.", "I give light to the Earth.", "I set in the west."] },
+                { word: "Chair", category: "Furniture", hints: ["I have legs but cannot walk.", "You sit on me.", "I have a back.", "I can be found at a table.", "I can be made of wood or plastic."] }
+            ];
+
+            let currentQWord = {};
+            let qChances = 20;
+            let qHintsLeft = 5;
+            let qRound = 0;
+            let qScore = 0;
+            let qHintsGivenIndex = 0;
+
+            function startQuestionGame() {
+                currentQWord = questionWords[Math.floor(Math.random() * questionWords.length)];
+                qChances = 20;
+                qHintsLeft = 5;
+                qHintsGivenIndex = 0;
+                qRound++;
+
+                document.getElementById('questions-intro').style.display = 'none';
+                document.getElementById('questions-end').style.display = 'none';
+                document.getElementById('questions-play').style.display = 'block';
+
+                document.getElementById('qTopic').textContent = currentQWord.category; // Show Category
+                document.getElementById('qChances').textContent = qChances;
+                document.getElementById('qHintsLeft').textContent = qHintsLeft;
+                document.getElementById('qInput').value = '';
+                document.getElementById('qFeedback').textContent = '';
+
+                // Reset Chat
+                const chatLog = document.getElementById('qChatArea');
+                chatLog.innerHTML = `<div class="chat-msg ai" style="background:#e0f2fe; padding:0.5rem 1rem; border-radius:12px 12px 12px 0; align-self:flex-start; max-width:80%; margin-bottom:0.5rem">
+                I am thinking of a <b>${currentQWord.category}</b>. You have 20 Yes/No questions. Ask me!
+            </div>`;
+            }
+
+            function addChatBubble(text, isUser) {
+                const chatLog = document.getElementById('qChatArea');
+                const div = document.createElement('div');
+                div.className = isUser ? 'chat-msg user' : 'chat-msg ai';
+
+                // Styling
+                div.style.padding = "0.5rem 1rem";
+                div.style.marginBottom = "0.5rem";
+                div.style.maxWidth = "80%";
+                div.style.borderRadius = isUser ? "12px 12px 0 12px" : "12px 12px 12px 0";
+                div.style.alignSelf = isUser ? "flex-end" : "flex-start";
+                div.style.background = isUser ? "#3b82f6" : "#e0f2fe";
+                div.style.color = isUser ? "#fff" : "#0f172a";
+                div.textContent = text;
+
+                chatLog.appendChild(div);
+                chatLog.scrollTop = chatLog.scrollHeight;
+            }
+
+            function getHint() {
+                if (qChances <= 1) {
+                    document.getElementById('qFeedback').textContent = "Not enough chances!";
+                    return;
+                }
+                if (qHintsLeft <= 0) {
+                    document.getElementById('qFeedback').textContent = "No hints left!";
+                    return;
+                }
+                if (qHintsGivenIndex >= currentQWord.hints.length) {
+                    document.getElementById('qFeedback').textContent = "No unique hints left!";
+                    return;
+                }
+
+                qChances--;
+                qHintsLeft--;
+                document.getElementById('qChances').textContent = qChances;
+                document.getElementById('qHintsLeft').textContent = qHintsLeft;
+
+                const hint = currentQWord.hints[qHintsGivenIndex];
+                addChatBubble(`💡 Hint: ${hint}`, false);
+                qHintsGivenIndex++;
+            }
+
+            async function submitQuestion() {
+                const input = document.getElementById('qInput');
+                const btn = document.getElementById('qSubmitBtn');
+                const val = input.value.trim();
+
+                if (!val) return;
+
+                qChances--;
+                document.getElementById('qChances').textContent = qChances;
+
+                addChatBubble(val, true); // User Msg
+                input.value = '';
+
+                if (qChances <= 0) {
+                    endQuestionGame(false);
+                    return;
+                }
+
+                // AI Response (Backend)
+                const typingId = 'typing-' + Date.now();
+                const chatLog = document.getElementById('qChatArea');
+                const typingDiv = document.createElement('div');
+                typingDiv.id = typingId;
+                typingDiv.textContent = "...";
+                typingDiv.style.marginLeft = "1rem";
+                typingDiv.style.color = "#999";
+                chatLog.appendChild(typingDiv);
+
+                btn.disabled = true;
+
+                try {
+                    const response = await fetch('/game_chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ word: currentQWord.word, question: val })
+                    });
+                    const data = await response.json();
+
+                    document.getElementById(typingId).remove();
+                    addChatBubble(data.answer, false); // AI Msg
+
+                } catch (e) {
+                    document.getElementById(typingId).remove();
+                    addChatBubble("I'm having trouble connecting.", false);
+                } finally {
+                    btn.disabled = false;
+                    input.focus();
+                }
+            }
+
+            function submitFinalGuess() {
+                const input = document.getElementById('qGuessInput');
+                const val = input.value.trim();
+
+                if (!val) return;
+
+                // Check correctness
+                if (val.toLowerCase() === currentQWord.word.toLowerCase()) {
+                    endQuestionGame(true);
+                } else {
+                    // Incorrect Guess Penalty
+                    qChances -= 3;
+                    if (qChances < 0) qChances = 0;
+                    document.getElementById('qChances').textContent = qChances;
+
+                    document.getElementById('qFeedback').textContent = "Incorrect Guess! (-3 Chances)";
+                    document.getElementById('qFeedback').style.color = "#ef4444";
+
+                    input.value = '';
+                    input.focus();
+
+                    if (qChances <= 0) {
+                        endQuestionGame(false);
+                    }
+                }
+            }
+
+            function endQuestionGame(win) {
+                document.getElementById('questions-play').style.display = 'none';
+                document.getElementById('questions-end').style.display = 'block';
+
+                const endTitle = document.getElementById('qEndTitle');
+                const endMsg = document.getElementById('qEndMessage');
+
+                if (win) {
+                    endTitle.textContent = "Correct! 🎉";
+                    endTitle.style.color = "#16a34a";
+                    endMsg.textContent = `The word was indeed "${currentQWord.word}". Great job!`;
+                    qScore += 10; // Simple scoring
+                } else {
+                    endTitle.textContent = "Out of Chances 😔";
+                    endTitle.style.color = "#ef4444";
+                    endMsg.textContent = `The word was "${currentQWord.word}". Better luck next time.`;
+                }
+
+                document.getElementById('questionStat').textContent = qScore;
+            }
+
+            // --- STORY MODE GAME (INFINITE GENERATOR) ---
+            const storyData = {
+                names: ["James", "Mary", "Robert", "Patricia", "John", "Jennifer", "Michael", "Linda", "David", "Elizabeth"],
+                locations: ["the old library", "Main Street Cafe", "the city park", "Grandma's house", "the supermarket", "the train station"],
+                times: ["8:15 AM", "noon", "3:45 PM", "6:30 PM", "midnight", "sunrise"],
+                items: ["a vintage watch", "a loaf of bread", "a red umbrella", "a morning newspaper", "a bouquet of tulips", "a leather wallet"],
+                prices: ["$12.50", "$3.00", "$25", "$1.99", "$15"],
+                events: ["started to rain heavy", "saw a stray dog barking", "met an old friend named Tom", "dropped their keys", "heard a loud siren"],
+                details: ["wearing a blue coat", "carrying a green bag", "limping slightly", "whistling a tune", "checking their phone"]
+            };
+
+            let currentStory = {};
+            let storyScore = 0;
+            let currentQuestionIndex = 0;
+
+            function generateStory() {
+                const name = storyData.names[Math.floor(Math.random() * storyData.names.length)];
+                const loc = storyData.locations[Math.floor(Math.random() * storyData.locations.length)];
+                const time = storyData.times[Math.floor(Math.random() * storyData.times.length)];
+                const item = storyData.items[Math.floor(Math.random() * storyData.items.length)];
+                const price = storyData.prices[Math.floor(Math.random() * storyData.prices.length)];
+                const event = storyData.events[Math.floor(Math.random() * storyData.events.length)];
+                const detail = storyData.details[Math.floor(Math.random() * storyData.details.length)];
+
+                const text = `It was ${time} when ${name} arrived at ${loc}. They were ${detail}. ${name} decided to buy ${item}, which cost exactly ${price}. Just as they were leaving, they ${event}.`;
+
+                return {
+                    title: `The Story of ${name}`,
+                    text: text,
+                    questions: [
+                        { q: `What time was it?`, a: generateOptions(time, storyData.times), correct: 0 },
+                        { q: `Where did ${name} go?`, a: generateOptions(loc, storyData.locations), correct: 0 },
+                        { q: `What did they buy?`, a: generateOptions(item, storyData.items), correct: 0 },
+                        { q: `How much did it cost?`, a: generateOptions(price, storyData.prices), correct: 0 },
+                        { q: `What happened at the end?`, a: generateOptions(event, storyData.events), correct: 0 }
+                    ]
+                };
+            }
+
+            function generateOptions(correct, sourceArray) {
+                let opts = [correct];
+                while (opts.length < 3) {
+                    const wrong = sourceArray[Math.floor(Math.random() * sourceArray.length)];
+                    if (!opts.includes(wrong)) opts.push(wrong);
+                }
+                return opts;
+            }
+
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
+            function startStoryGame() {
+                currentStory = generateStory();
+                storyScore = 0;
+                currentQuestionIndex = 0;
+
+                document.getElementById('story-intro').style.display = 'none';
+                document.getElementById('story-content').style.display = 'block';
+                document.getElementById('story-text').textContent = currentStory.text;
+                document.getElementById('story-title').textContent = currentStory.title;
+
+                // 20 Seconds reading time
+                let timeLeft = 20;
+                const timerDisplay = document.getElementById('story-timer');
+                if (timerDisplay) timerDisplay.textContent = `Time remaining: ${timeLeft}s`;
+
+                const timer = setInterval(() => {
+                    timeLeft--;
+                    if (timerDisplay) timerDisplay.textContent = `Time remaining: ${timeLeft}s`;
+                    if (timeLeft <= 0) {
+                        clearInterval(timer);
+                        startQuiz();
+                    }
+                }, 1000);
+            }
+
+            function startQuiz() {
+                document.getElementById('story-content').style.display = 'none';
+                document.getElementById('story-quiz').style.display = 'block';
+                showQuestion();
+            }
+
+            function showQuestion() {
+                const q = currentStory.questions[currentQuestionIndex];
+
+                document.getElementById('quiz-question').textContent = q.q;
+                const optionsDiv = document.getElementById('quiz-options');
+                optionsDiv.innerHTML = '';
+
+                let optionsWithIndices = q.a.map((opt, i) => ({ val: opt, isCorrect: i === 0 }));
+                shuffleArray(optionsWithIndices);
+
+                optionsWithIndices.forEach((optObj) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn';
+                    btn.style.margin = '0.5rem 0';
+                    btn.style.background = '#f1f5f9';
+                    btn.style.color = '#1e293b';
+                    btn.textContent = optObj.val;
+                    btn.onclick = () => checkStoryAnswer(optObj.isCorrect);
+                    optionsDiv.appendChild(btn);
+                });
+            }
+
+            function checkStoryAnswer(isCorrect) {
+                if (isCorrect) {
+                    storyScore++;
+                }
+
+                currentQuestionIndex++;
+                if (currentQuestionIndex < currentStory.questions.length) {
+                    showQuestion();
+                } else {
+                    endStoryGame();
+                }
+            }
+
+            function endStoryGame() {
+                document.getElementById('story-quiz').style.display = 'none';
+                document.getElementById('story-intro').style.display = 'block';
+
+                const finalScore = Math.round((storyScore / currentStory.questions.length) * 100);
+
+                let feedback = "Good effort!";
+                if (finalScore === 100) feedback = "Perfect Recall! Impressive.";
+                else if (finalScore > 75) feedback = "Great job! Strong memory.";
+
+                alert(`${feedback} You scored ${finalScore}%`);
+
+                // Update Stats
+                document.getElementById('storyStat').textContent = finalScore + '%';
+                updateNeuroScore();
+            }
+
+
+            // --- REFLEX GAME FIX ---
+            // Class-based state management to override !important styles
+
+            let reflexStartTime, reflexTimeout;
+            const reflexArea = document.getElementById('reflexArea');
+            const reflexMainText = document.getElementById('reflexMainText');
+            const reflexSubText = document.getElementById('reflexSubText');
+            let reflexState = 'idle'; // idle, waiting, ready
+
+            if (reflexArea) {
+                reflexArea.addEventListener('mousedown', () => {
+                    if (reflexState === 'idle') {
+                        startReflexTest();
+                    } else if (reflexState === 'waiting') {
+                        endReflexTest(false); // Too early
+                    } else if (reflexState === 'ready') {
+                        endReflexTest(true); // Success
+                    }
+                });
+            }
+
+            function startReflexTest() {
+                reflexState = 'waiting';
+                reflexArea.className = 'reflex-waiting'; // RED (!important)
+                reflexMainText.textContent = "Wait for Green...";
+                reflexSubText.textContent = "Don't click yet!";
+
+                const randomDelay = Math.floor(Math.random() * 2000) + 1500; // 1.5s - 3.5s
+
+                reflexTimeout = setTimeout(() => {
+                    reflexState = 'ready';
+                    reflexStartTime = Date.now();
+                    reflexArea.className = 'reflex-ready'; // GREEN (!important)
+                    reflexMainText.textContent = "CLICK NOW!";
+                    reflexSubText.textContent = "";
+                }, randomDelay);
+            }
+
+            function endReflexTest(success) {
+                clearTimeout(reflexTimeout);
+                reflexState = 'idle';
+                reflexArea.className = ''; // remove classes
+                reflexArea.style.background = '#f1f5f9'; // fallback inline
+                reflexArea.style.color = 'var(--text-main)';
+
+                if (success) {
+                    const reactionTime = Date.now() - reflexStartTime;
+                    reflexMainText.textContent = `${reactionTime}ms`;
+                    reflexSubText.textContent = "Great job! Click to try again.";
+                    document.getElementById('lastReflex').textContent = reactionTime;
+                    document.getElementById('reflexStat').textContent = reactionTime;
+
+                    let best = parseInt(document.getElementById('bestReflex').textContent) || 9999;
+                    if (reactionTime < best) { document.getElementById('bestReflex').textContent = reactionTime; }
+                    updateNeuroScore();
+                }
+                else {
+                    reflexMainText.textContent = "Too Early!";
+                    reflexSubText.textContent = "Click to try again.";
+                }
+            }
+
+            // --- MEMORY GAME UPGRADES ---
+            // (Existing logic + visual enhancements)
+            let sequence = [];
+            let playerSequence = [];
+            let level = 0;
+            let isPlaying = false;
+            let highScore = 0;
+
+            const tiles = document.querySelectorAll('.grid-tile');
+            const startBtn = document.getElementById('startGameBtn');
+            const levelDisplay = document.getElementById('gameLevel');
+            if (startBtn) {
+                startBtn.onclick = () => {
+                    if (isPlaying) return;
+                    resetGame();
+                    nextLevel();
+                };
+            }
+
+            function resetGame() {
+                sequence = [];
+                playerSequence = [];
+                level = 0;
+                isPlaying = true;
+                startBtn.disabled = true;
+                startBtn.textContent = "Memorize Pattern...";
+            }
+
+            function nextLevel() {
+                level++;
+                levelDisplay.textContent = level;
+                playerSequence = [];
+                sequence.push(Math.floor(Math.random() * 9));
+                playSequence();
+            }
+
+            async function playSequence() {
+                for (let index of sequence) {
+                    await flashTile(index);
+                    await new Promise(r => setTimeout(r, 400)); // Gap between flashes
+                }
+                startBtn.textContent = "Your Turn!";
+            }
+
+            function flashTile(index) {
+                return new Promise(resolve => {
+                    tiles[index].classList.add('active');
+                    setTimeout(() => {
+                        tiles[index].classList.remove('active');
+                        resolve();
+                    }, 500);
+                });
+            }
+
+            tiles.forEach(tile => {
+                tile.onclick = () => {
+                    if (!isPlaying || sequence.length === 0) return; // Prevent clicks during playback
+
+                    const index = parseInt(tile.getAttribute('data-index'));
+                    playerSequence.push(index);
+
+                    // Visual feedback
+                    tile.classList.add('active');
+                    setTimeout(() => tile.classList.remove('active'), 200);
+
+                    if (playerSequence[playerSequence.length - 1] !== sequence[playerSequence.length - 1]) {
+                        gameOverVisuals();
+                        return;
+                    }
+
+                    if (playerSequence.length === sequence.length) {
+                        setTimeout(nextLevel, 800);
+                    }
+                };
+            });
+
+            function gameOverVisuals() {
+                isPlaying = false;
+                startBtn.disabled = false;
+                startBtn.textContent = "Try Again";
+                document.querySelector('.game-card').style.borderColor = 'red';
+                setTimeout(() => document.querySelector('.game-card').style.borderColor = 'var(--border)', 500);
+
+                if (level > highScore) {
+                    highScore = level - 1;
+                    document.getElementById('highScore').textContent = highScore;
+                    document.getElementById('memoryStat').textContent = `Lvl ${highScore}`;
+                }
+                updateNeuroScore();
+            }
+
+            function updateNeuroScore() {
+                // Get stats
+                const reflexTime = parseInt(document.getElementById('reflexStat').textContent) || 0;
+                const memoryLevel = parseInt(document.getElementById('gameLevel').textContent) || 0;
+                const storyScoreVal = parseInt(document.getElementById('storyStat').textContent) || 0;
+                const logicScoreVal = parseInt(document.getElementById('questionStat').textContent) || 0;
+
+                // External Games Bonus
+                let bonus = 0;
+                if (document.getElementById('played_sudoku').checked) bonus += 5;
+                if (document.getElementById('played_c4').checked) bonus += 5;
+                if (document.getElementById('played_mahjong').checked) bonus += 5;
+                if (document.getElementById('played_checkers').checked) bonus += 5;
+                if (document.getElementById('played_rummikub').checked) bonus += 5;
+
+                // Normalize scores (Approximate)
+                // Reflex: <300ms = 100pts, >1000ms = 0pts
+                let reflexScore = 0;
+                if (reflexTime > 0) {
+                    reflexScore = Math.max(0, 100 - (reflexTime - 250) / 5);
+                    if (reflexScore > 100) reflexScore = 100;
+                }
+
+                // Memory: Level 10 = 100pts
+                let memoryScore = Math.min(100, memoryLevel * 10);
+
+                // Logic: Max 100
+                let logicScore = Math.min(100, logicScoreVal);
+
+                // Weights: Memory 25%, Reflex 25%, Story 25%, Logic 25% + Bonus
+                const total = Math.round((memoryScore * 0.25) + (reflexScore * 0.25) + (storyScoreVal * 0.25) + (logicScore * 0.25) + bonus);
+                const clampedTotal = Math.min(100, total);
+
+                document.getElementById('totalNeuroScore').textContent = clampedTotal;
+            }
+
+            async function calculateRisk() {
+                const riskBtn = document.getElementById('riskBtn');
+                riskBtn.disabled = true;
+                riskBtn.innerHTML = '<div class="spinner"></div> Analyzing...';
+                document.getElementById('riskResult').style.display = 'none';
+
+                const data = {
+                    age: document.getElementById('age').value,
+                    education: document.getElementById('education').value,
+                    bmi: document.getElementById('bmi').value,
+                    alcohol: document.getElementById('alcohol').value,
+                    sleep: document.getElementById('sleep').value,
+                    exercise: document.getElementById('exercise').value,
+                    diet: document.getElementById('diet').value,
+                    bp: document.getElementById('bp').value,
+                    cholesterol: document.getElementById('cholesterol').value,
+                    stress: document.getElementById('stress').value,
+                    smoking: document.getElementById('smoking').checked ? 1 : 0,
+                    diabetes: document.getElementById('diabetes').checked ? 1 : 0,
+                    hypertension: document.getElementById('hypertension').checked ? 1 : 0,
+                    familyHistory: document.getElementById('familyHistory').checked ? 1 : 0,
+                    neuroScore: document.getElementById('totalNeuroScore').textContent
+                };
+
+                try {
+                    const response = await fetch('/risk_assessment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+
+                    document.getElementById('riskResult').style.display = 'block';
+                    document.getElementById('riskScore').textContent = (result.risk_score * 100).toFixed(1);
+
+                    // Enhanced Summary with Disclaimer
+                    let summary = result.summary || result.report || "Analysis detailed below.";
+                    summary += `\n\nBased on clinical dataset comparisons (n=${result.dataset_context || 'N/A'}).`;
+                    summary += `\n\n**DISCLAIMER:** This score is an estimate based on provided risk factors and cognitive performance. It is NOT a medical diagnosis.`;
+
+                    document.getElementById('riskSummary').textContent = summary;
+
+                } catch (e) {
+                    alert('Analysis failed. Please check inputs.');
+                    console.error(e);
+                } finally {
+                    riskBtn.disabled = false;
+                    riskBtn.textContent = 'Analyze Risk Profile';
+                }
+            }
+            // MRI UPLOAD & ANALYSIS (EXISTING)
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const fileName = document.getElementById('fileName');
+            const previewImage = document.getElementById('preview-image');
+            const form = document.getElementById('uploadForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const resultContainer = document.getElementById('result-container');
+            const resultLabel = document.getElementById('resultLabel');
+            const statusDot = document.getElementById('statusDot');
+            const reasoningText = document.getElementById('reasoningText');
+            const aiContainer = document.getElementById('ai-container');
+            const detailsList = document.getElementById('details-list');
+            const btnSummary = document.getElementById('btnSummary');
+            const btnDetailed = document.getElementById('btnDetailed');
+
+            let currentSummary = "";
+            let currentDetailed = "";
+
+            // Toggle Logic
+            btnSummary.addEventListener('click', () => {
+                reasoningText.textContent = currentSummary;
+                btnSummary.classList.add('active');
+                btnDetailed.classList.remove('active');
+                btnSummary.style.background = 'white';
+                btnSummary.style.color = 'black';
+                btnDetailed.style.background = 'transparent';
+                btnDetailed.style.color = '#64748b';
+            });
+
+            btnDetailed.addEventListener('click', () => {
+                reasoningText.textContent = currentDetailed;
+                btnDetailed.classList.add('active');
+                btnSummary.classList.remove('active');
+                btnDetailed.style.background = 'white';
+                btnDetailed.style.color = 'black';
+                btnSummary.style.background = 'transparent';
+                btnSummary.style.color = '#64748b';
+            });
+
+            dropZone.addEventListener('click', () => fileInput.click());
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('drag-over');
+            });
+
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+                fileInput.files = e.dataTransfer.files;
+                handleFile(fileInput.files[0]);
+            });
+
+            fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+            function handleFile(file) {
+                if (file) {
+                    fileName.textContent = file.name;
+                    submitBtn.disabled = false;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        previewImage.src = e.target.result;
+                        previewImage.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<div class="spinner"></div> Running AI Analysis...';
+                resultContainer.style.display = 'none';
+
+                const formData = new FormData(form);
+
+                try {
+                    const response = await fetch('/predict', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Server Error: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+
+                    resultContainer.style.display = 'block';
+                    resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    resultLabel.textContent = data.result;
+                    statusDot.className = data.result === 'Nondemented' ? 'status-dot negative' : 'status-dot positive';
+
+                    let detailsHtml = '';
+                    Object.entries(data.details).sort(([, a], [, b]) => b - a).forEach(([label, score]) => {
+                        detailsHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <span>${label}</span>
+                    <b>${score.toFixed(1)}%</b>
+                </div>`;
+                    });
+                    detailsList.innerHTML = detailsHtml;
+
+                    if (data.reasoning) {
+                        currentDetailed = data.reasoning;
+                        currentSummary = data.summary || "Summary not available.";
+                        reasoningText.textContent = currentDetailed;
+                        aiContainer.style.display = 'block';
+                        btnDetailed.click();
+                    }
+
+                } catch (err) {
+                    console.error(err);
+                    alert('An error occurred during analysis. Please try again. ' + err.message);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Run Clinical Analysis';
+                }
+            });
+        </script>
+</body>
+
+</html>
