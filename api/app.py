@@ -471,4 +471,4 @@ def game_chat():
 
 if __name__ == '__main__':
     # Disable debug to avoid reloader issues, change port to avoid conflict
-    app.run(debug=False, port=5001)
+    app.run(host="127.0.0.1", port=5000)
