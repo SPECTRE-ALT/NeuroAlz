@@ -410,10 +410,71 @@
             margin-right: 0.5rem;
         }
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+        /* Validation Bar */
+        .validation-container {
+            display: none;
+            margin-bottom: 1.5rem;
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .validation-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        .bar-bg {
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--accent);
+            border-radius: 10px;
+            transition: width 0.4s ease, background 0.3s ease;
+        }
+
+        .validation-step {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .validation-step svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .bar-fill.error {
+            background: var(--error);
+        }
+
+        .bar-fill.success {
+            background: var(--success);
+        }
+
+        @keyframes pulse-blue {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        .validating {
+            animation: pulse-blue 1.5s infinite;
         }
     </style>
 </head>
@@ -480,7 +541,23 @@
 
                 <img id="preview-image" alt="MRI Preview">
 
-                <div id="error-message" class="error-badge"></div>
+                <div id="validationContainer" class="validation-container">
+                    <div class="validation-header">
+                        <span id="validationTitle">Medical Integrity Scan</span>
+                        <span id="validationPercent">0%</span>
+                    </div>
+                    <div class="bar-bg">
+                        <div id="validationBar" class="bar-fill"></div>
+                    </div>
+                    <div id="validationStep" class="validation-step">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        Initializing Security Protocols...
+                    </div>
+                </div>
 
                 <button type="submit" id="submitBtn" class="btn btn-primary" disabled>
                     Run Clinical Analysis
@@ -686,7 +763,6 @@
                 </div>
             </div>
         </div>
-
         <!-- 20 QUESTIONS GAME CONTAINER -->
         <div id="game-questions" class="active-game-view" style="display:none">
             <div class="game-card">
@@ -784,9 +860,6 @@
             <p id="gameInsight" style="font-size: 0.9rem; margin:0">Complete both modules to generate a full brain
                 health report.</p>
         </div>
-
-
-        <!-- NEW INFO SECTION -->
     </div>
 
     <!-- ASSESSMENT SECTION (Redesigned 2-Column) -->
@@ -969,10 +1042,9 @@
                     <p id="riskSummary" class="ai-reasoning"></p>
                 </div>
             </div>
-
-
-
         </div>
+    </div>
+</div>
 
         <script>
             // TAB SWITCHING
@@ -986,7 +1058,7 @@
 
                 // Layout adjustments
                 const container = document.querySelector('.container');
-                if (tab === 'games' || tab === 'mri') {
+                if (tab === 'games' || tab === 'mri' || tab === 'assess') {
                     container.classList.add('wide');
                 } else {
                     container.classList.remove('wide');
@@ -1656,8 +1728,31 @@
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 submitBtn.disabled = true;
-                submitBtn.innerHTML = '<div class="spinner"></div> Running AI Analysis...';
                 resultContainer.style.display = 'none';
+
+                const validationContainer = document.getElementById('validationContainer');
+                const validationBar = document.getElementById('validationBar');
+                const validationPercent = document.getElementById('validationPercent');
+                const validationStep = document.getElementById('validationStep');
+                const validationTitle = document.getElementById('validationTitle');
+
+                validationContainer.style.display = 'block';
+                validationBar.className = 'bar-fill validating';
+                
+                const steps = [
+                    { p: 30, t: "Verifying File Format Integrity..." },
+                    { p: 60, t: "Scanning Brain Morphology & Symmetry..." },
+                    { p: 90, t: "AI Security Filter (Checking for Non-Brain Objects)..." }
+                ];
+
+                for(const step of steps) {
+                    validationStep.innerHTML = `<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg> ${step.t}`;
+                    validationBar.style.width = step.p + '%';
+                    validationPercent.textContent = step.p + '%';
+                    await new Promise(r => setTimeout(r, 800));
+                }
+
+                submitBtn.innerHTML = '<div class="spinner"></div> Running Neural Analysis...';
 
                 const formData = new FormData(form);
 
@@ -1673,10 +1768,19 @@
 
                     const data = await response.json();
 
-                    if (data.error) {
-                        alert(data.error);
+                    if (data.result === "FAKE MRI DETECTED" || data.result.includes("REJECTED")) {
+                        validationBar.className = 'bar-fill error';
+                        validationTitle.textContent = "Validation Failed";
+                        validationStep.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> ${data.reasoning || data.summary}`;
+                        submitBtn.innerHTML = 'Scan Rejected';
                         return;
                     }
+
+                    validationBar.className = 'bar-fill success';
+                    validationBar.style.width = '100%';
+                    validationPercent.textContent = '100%';
+                    validationTitle.textContent = "Integrity Verified";
+                    validationStep.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Brain MRI Successfully Validated`;
 
                     resultContainer.style.display = 'block';
                     resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });

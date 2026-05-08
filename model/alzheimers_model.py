@@ -26,14 +26,16 @@ class AlzheimerNet(nn.Module):
         num_features = self.base_model.classifier[1].in_features
         
         if sophisticated:
-            # "Best Model" from the info:
-            # [BatchNormalization -> Dense(512) -> ReLU -> Dropout(0.5) -> Dense(4)]
+            # Upgrade to a modern, robust classifier head
             self.base_model.classifier = nn.Sequential(
-                nn.BatchNorm1d(num_features),
+                nn.LayerNorm(num_features), # Better for medical scans than BatchNorm
                 nn.Linear(num_features, 512),
-                nn.ReLU(),
-                nn.Dropout(0.5), # Optimal dropout from research
-                nn.Linear(512, num_classes)
+                nn.Mish(), # Mish activation is more accurate than ReLU for deep medical networks
+                nn.Dropout(0.3),
+                nn.Linear(512, 256),
+                nn.Mish(),
+                nn.Dropout(0.2),
+                nn.Linear(256, num_classes)
             )
         else:
             # Legacy/Simple architecture (Single Linear Layer)
