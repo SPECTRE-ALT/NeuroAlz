@@ -16,21 +16,22 @@ jobs:
       - name: Install Hugging Face Hub
         run: pip install huggingface_hub
 
-      - name: Upload to Step
+      - name: Force Upload to Main
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           python -c "
           from huggingface_hub import HfApi
           api = HfApi()
-          try:
-              api.upload_folder(
-                  folder_path='.',
-                  repo_id='VellaroSKIBIDI/NeuroAlz',
-                  repo_type='space',
-                  token='${{ secrets.HF_TOKEN }}',
-                  ignore_patterns=['.github/workflows/*', 'api/build/*', 'api/dist/*']
-              )
-          except Exception as e:
-              print(f'Caught timeout but files might be there: {e}')
+          print('Starting forced upload to main branch...')
+          api.upload_folder(
+              folder_path='.',
+              repo_id='VellaroSKIBIDI/NeuroAlz',
+              repo_type='space',
+              revision='main',
+              token='${{ secrets.HF_TOKEN }}',
+              delete_disposition=True,
+              ignore_patterns=['.github/workflows/*', 'api/build/*', 'api/dist/*', '.git/*']
+          )
+          print('Upload finished!')
           "
