@@ -21,21 +21,31 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           python -c "
-          from huggingface_hub import HfApi, login
+          from huggingface_hub import HfApi
           import os
-          
-          # Log in using the secret token
-          login(token=os.environ['HF_TOKEN'])
-          
+          import time
+
           api = HfApi()
-          print('Starting heavy-duty upload...')
-          
-          api.upload_large_folder(
-              folder_path='.',
-              repo_id='VellaroSKIBIDI/NeuroAlz',
-              repo_type='space',
-              revision='main',
-              ignore_patterns=['.github/*', '.git/*', '**/build/*', '**/dist/*', '**/*.exe', '**/*.pyc']
-          )
-          print('Upload finished!')
+          print('Starting robust upload...')
+
+          # We try 3 times in case of server timeouts (502/504)
+          for attempt in range(3):
+              try:
+                  api.upload_folder(
+                      folder_path='.',
+                      repo_id='VellaroSKIBIDI/NeuroAlz',
+                      repo_type='space',
+                      revision='main',
+                      token=os.environ['HF_TOKEN'],
+                      ignore_patterns=['.github/*', '.git/*', '**/build/*', '**/dist/*', '**/*.exe', '**/*.pyc']
+                  )
+                  print('Upload finished successfully!')
+                  break
+              except Exception as e:
+                  print(f'Attempt {attempt + 1} failed with error: {e}')
+                  if attempt < 2:
+                      print('Waiting 30 seconds before retrying...')
+                      time.sleep(30)
+                  else:
+                      raise e
           "
