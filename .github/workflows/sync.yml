@@ -21,18 +21,21 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           python -c "
-          from huggingface_hub import HfApi
-          api = HfApi()
-          print('Starting heavy-duty upload via upload_large_folder...')
+          from huggingface_hub import HfApi, login
+          import os
           
-          # This method is specifically designed to prevent 502/504 timeouts
+          # Log in using the secret token
+          login(token=os.environ['HF_TOKEN'])
+          
+          api = HfApi()
+          print('Starting heavy-duty upload...')
+          
           api.upload_large_folder(
               folder_path='.',
               repo_id='VellaroSKIBIDI/NeuroAlz',
               repo_type='space',
               revision='main',
-              token='${{ secrets.HF_TOKEN }}',
               ignore_patterns=['.github/*', '.git/*', '**/build/*', '**/dist/*', '**/*.exe', '**/*.pyc']
           )
-          print('Mission Accomplished: Upload finished!')
+          print('Upload finished!')
           "
