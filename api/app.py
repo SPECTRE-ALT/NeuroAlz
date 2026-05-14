@@ -460,5 +460,5 @@ def game_chat():
     return jsonify({'answer': answer})
 
 if __name__ == '__main__':
-    # Disable debug to avoid reloader issues, change port to avoid conflict
-    app.run(host="127.0.0.1", port=5000)
+    # host MUST be 0.0.0.0 and port MUST match your README (3000)
+    app.run(host="0.0.0.0", port=3000)
