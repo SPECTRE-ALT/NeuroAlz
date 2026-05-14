@@ -30,8 +30,7 @@ jobs:
               repo_type='space',
               revision='main',
               token='${{ secrets.HF_TOKEN }}',
-              delete_disposition=True,
-              ignore_patterns=['.github/workflows/*', 'api/build/*', 'api/dist/*', '.git/*']
+              ignore_patterns=['.github/workflows/*', '.git/*']
           )
           print('Upload finished!')
           "
