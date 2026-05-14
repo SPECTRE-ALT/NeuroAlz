@@ -23,14 +23,15 @@ jobs:
           python -c "
           from huggingface_hub import HfApi
           api = HfApi()
-          print('Starting forced upload to main branch...')
+          print('Starting cleaned upload...')
           api.upload_folder(
               folder_path='.',
               repo_id='VellaroSKIBIDI/NeuroAlz',
               repo_type='space',
               revision='main',
               token='${{ secrets.HF_TOKEN }}',
-              ignore_patterns=['.github/workflows/*', '.git/*']
+              # This excludes all the heavy 'build' and 'exe' files
+              ignore_patterns=['.github/*', '.git/*', '**/build/*', '**/dist/*', '**/*.exe', '**/*.pyc']
           )
           print('Upload finished!')
           "
