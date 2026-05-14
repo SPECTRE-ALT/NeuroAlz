@@ -17,9 +17,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # This forces the runner to actually pull the 2GB file before pushing
+          git lfs install
           git lfs pull
-          
-          # Add the HF remote and push
           git remote add hf https://VellaroSKIBIDI:$HF_TOKEN@huggingface.co/spaces/VellaroSKIBIDI/NeuroAlz
           git push --force hf master:main
