@@ -23,15 +23,16 @@ jobs:
           python -c "
           from huggingface_hub import HfApi
           api = HfApi()
-          print('Starting cleaned upload...')
-          api.upload_folder(
+          print('Starting heavy-duty upload via upload_large_folder...')
+          
+          # This method is specifically designed to prevent 502/504 timeouts
+          api.upload_large_folder(
               folder_path='.',
               repo_id='VellaroSKIBIDI/NeuroAlz',
               repo_type='space',
               revision='main',
               token='${{ secrets.HF_TOKEN }}',
-              # This excludes all the heavy 'build' and 'exe' files
               ignore_patterns=['.github/*', '.git/*', '**/build/*', '**/dist/*', '**/*.exe', '**/*.pyc']
           )
-          print('Upload finished!')
+          print('Mission Accomplished: Upload finished!')
           "
