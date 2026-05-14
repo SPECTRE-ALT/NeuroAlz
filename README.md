@@ -7,6 +7,9 @@ sdk: docker
 app_port: 3000
 ---
 
+# Alzheimer's Disease Stage Detection Using Deep Learning
+
+This repository contains the implementation of a deep learning model designed to detect various stages of Alzheimer's disease using MRI brain scans...
 
 # Alzheimer's Disease Stage Detection Using Deep Learning
 
