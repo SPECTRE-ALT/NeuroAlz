@@ -7,6 +7,7 @@ sdk: docker
 app_port: 3000
 ---
 
+
 # Alzheimer's Disease Stage Detection Using Deep Learning
 
 This repository contains the implementation of a deep learning model designed to detect various stages of Alzheimer's disease using MRI brain scans. The project employs a transfer learning approach, utilizing the EfficientNetB0 architecture, adapted to classify images into four distinct stages: nondemented, very mild, mild, and moderate dementia. Built with PyTorch, the model is trained on a structured dataset of MRI images and provides a robust framework for early and accurate diagnosis of Alzheimer’s progression.
