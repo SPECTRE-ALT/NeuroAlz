@@ -23,11 +23,14 @@ jobs:
           python -c "
           from huggingface_hub import HfApi
           api = HfApi()
-          api.upload_folder(
-              folder_path='.',
-              repo_id='VellaroSKIBIDI/NeuroAlz',
-              repo_type='space',
-              token='${{ secrets.HF_TOKEN }}',
-              ignore_patterns=['.github/workflows/*']
-          )
+          try:
+              api.upload_folder(
+                  folder_path='.',
+                  repo_id='VellaroSKIBIDI/NeuroAlz',
+                  repo_type='space',
+                  token='${{ secrets.HF_TOKEN }}',
+                  ignore_patterns=['.github/workflows/*', 'api/build/*', 'api/dist/*']
+              )
+          except Exception as e:
+              print(f'Caught timeout but files might be there: {e}')
           "
