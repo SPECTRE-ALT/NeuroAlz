@@ -12,14 +12,14 @@ jobs:
         with:
           fetch-depth: 0
           lfs: true
+
       - name: Push to hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # Increase the buffer size so the 2GB file doesn't crash the connection
-          git config --global http.postBuffer 2147483648
-          git config --global http.lowSpeedLimit 0
-          git config --global http.lowSpeedTime 999999
+          # This forces the runner to actually pull the 2GB file before pushing
+          git lfs pull
           
+          # Add the HF remote and push
           git remote add hf https://VellaroSKIBIDI:$HF_TOKEN@huggingface.co/spaces/VellaroSKIBIDI/NeuroAlz
           git push --force hf master:main
