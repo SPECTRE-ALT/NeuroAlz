@@ -13,11 +13,21 @@ jobs:
           fetch-depth: 0
           lfs: true
 
-      - name: Push to hub
+      - name: Install Hugging Face Hub
+        run: pip install huggingface_hub
+
+      - name: Upload to Step
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git lfs install
-          git lfs pull
-          git remote add hf https://VellaroSKIBIDI:$HF_TOKEN@huggingface.co/spaces/VellaroSKIBIDI/NeuroAlz
-          git push --force hf master:main
+          python -c "
+          from huggingface_hub import HfApi
+          api = HfApi()
+          api.upload_folder(
+              folder_path='.',
+              repo_id='VellaroSKIBIDI/NeuroAlz',
+              repo_type='space',
+              token='${{ secrets.HF_TOKEN }}',
+              ignore_patterns=['.github/workflows/*']
+          )
+          "
