@@ -1,7 +1,7 @@
 name: Sync to Hugging Face
 on:
   push:
-    branches: [master]
+    branches: [master] # This is your GitHub branch
   workflow_dispatch:
 
 jobs:
@@ -16,36 +16,22 @@ jobs:
       - name: Install Hugging Face Hub
         run: pip install huggingface_hub
 
-      - name: Force Upload to Main
+      - name: Push to HF Main
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           python -c "
           from huggingface_hub import HfApi
           import os
-          import time
-
           api = HfApi()
-          print('Starting robust upload...')
-
-          # We try 3 times in case of server timeouts (502/504)
-          for attempt in range(3):
-              try:
-                  api.upload_folder(
-                      folder_path='.',
-                      repo_id='VellaroSKIBIDI/NeuroAlz',
-                      repo_type='space',
-                      revision='main',
-                      token=os.environ['HF_TOKEN'],
-                      ignore_patterns=['.github/*', '.git/*', '**/build/*', '**/dist/*', '**/*.exe', '**/*.pyc']
-                  )
-                  print('Upload finished successfully!')
-                  break
-              except Exception as e:
-                  print(f'Attempt {attempt + 1} failed with error: {e}')
-                  if attempt < 2:
-                      print('Waiting 30 seconds before retrying...')
-                      time.sleep(30)
-                  else:
-                      raise e
+          print('Pushing files to the main branch...')
+          api.upload_folder(
+              folder_path='.',
+              repo_id='VellaroSKIBIDI/NeuroAlz',
+              repo_type='space',
+              revision='main', # <--- This forces it to land on the branch you see
+              token=os.environ['HF_TOKEN'],
+              ignore_patterns=['.github/*', '.git/*', '**/build/*', '**/dist/*', '**/*.exe']
+          )
+          print('Done!')
           "
