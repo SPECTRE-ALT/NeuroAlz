@@ -8,11 +8,18 @@ jobs:
   sync-to-hub:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           lfs: true
       - name: Push to hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: git push --force https://VellaroSKIBIDI:$HF_TOKEN@huggingface.co/spaces/VellaroSKIBIDI/NeuroAlz master:main
+        run: |
+          # Increase the buffer size so the 2GB file doesn't crash the connection
+          git config --global http.postBuffer 2147483648
+          git config --global http.lowSpeedLimit 0
+          git config --global http.lowSpeedTime 999999
+          
+          git remote add hf https://VellaroSKIBIDI:$HF_TOKEN@huggingface.co/spaces/VellaroSKIBIDI/NeuroAlz
+          git push --force hf master:main
