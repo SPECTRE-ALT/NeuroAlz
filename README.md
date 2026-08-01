@@ -49,7 +49,7 @@ Setup & Installation Instructions:
 
 Clone the repository:
 
-git clone https://github.com/your-username/NeuroAlz.git
+git clone https://github.com/SPECTRE-ALT/NeuroAlz.git
 cd NeuroAlz
 
 
