@@ -1,10 +1,16 @@
+title: NeuroAlz
+emoji: 🧠
+colorFrom: blue
+colorTo: red
+sdk: docker
+app_port: 3000
 Alzheimer's Disease Stage Detection Using Deep Learning  
 This repository contains the implementation of a deep learning model designed to detect various stages of Alzheimer's disease using MRI brain scans. The project employs a transfer learning approach, utilizing the EfficientNetB0 architecture, adapted to classify images into four distinct stages: nondemented, very mild, mild, and moderate dementia. Built with PyTorch, the model is trained on a structured dataset of MRI images and provides a robust framework for early and accurate diagnosis of Alzheimer’s progression.  
 
 Key Features:  
 Model Architecture: Utilizes the pre-trained EfficientNetB0 model, fine-tuned for the specific task of classifying Alzheimer's disease stages from brain MRIs.  
 
-Data Processing: Includes comprehensive preprocessing and augmentation techniques to optimize model training and performance.
+Data Processing: Includes comprehensive preprocessing and augmentation techniques to optimize model training and performance.  
 
 API Integration: Features a Flask-based REST API that enables users to upload MRI images and receive diagnostic predictions, facilitating easy interaction with the model.
 
@@ -49,15 +55,15 @@ Train the model using train.py.
 
 Evaluate the model's performance with evaluate.py.  
 
-Start the API server by running python api/app.py.  
+Start the API server by running python api/app.py.
 
-Test the API using python tests/test_alzheimers_api.py.  
+Test the API using python tests/test_alzheimers_api.py.
 
-This project is intended for educational and research purposes, aiming to bridge the gap between medical imaging and machine learning technologies.  
+This project is intended for educational and research purposes, aiming to bridge the gap between medical imaging and machine learning technologies.
 
-Detailed Module Descriptions  
-API (app.py)  
-Located in the /api directory, app.py sets up a Flask-based REST API for the Alzheimer's Disease Detection model:  
+Detailed Module Descriptions
+API (app.py)
+Located in the /api directory, app.py sets up a Flask-based REST API for the Alzheimer's Disease Detection model:
 
 /predict endpoint for MRI image upload and prediction
 
