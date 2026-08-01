@@ -1,9 +1,3 @@
-title: NeuroAlz
-emoji: 🧠
-colorFrom: blue
-colorTo: red
-sdk: docker
-app_port: 3000
 
 Alzheimer's Disease Stage Detection Using Deep Learning
 
