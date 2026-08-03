@@ -156,6 +156,16 @@ st.markdown(
     .info-panel *, .info-panel strong, .info-panel span {
         color: #ffffff !important;
     }
+
+    /* Fix Streamlit info, success, warning, error boxes in Cognitive Games and dark contexts */
+    .stAlert, div[data-baseweb="notification"] {
+        background-color: #0f172a !important;
+        color: #ffffff !important;
+        border: 1px solid #334155 !important;
+    }
+    .stAlert *, div[data-baseweb="notification"] * {
+        color: #ffffff !important;
+    }
     </style>
     """,
     unsafe_allow_html=True
