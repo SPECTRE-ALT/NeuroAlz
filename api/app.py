@@ -3,6 +3,7 @@ import os
 import io
 import json
 import random
+import time
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -25,17 +26,17 @@ except Exception as e:
 # --- STREAMLIT PAGE CONFIG ---
 st.set_page_config(
     page_title="NeuroAlz - Comprehensive Alzheimer's Screening Suite",
-    page_icon="brain",
+    page_icon="🧠",
     layout="centered"
 )
 
-# --- MODERN FLASK-INSPIRED UI STYLING ---
+# --- HIGH-CONTRAST MODERN UI STYLING (FIXED BLENDING/VISIBILITY ISSUES) ---
 st.markdown(
     """
     <style>
-    /* Global Container Styles */
+    /* Global Container Styles with high contrast */
     .stApp {
-        background-color: #f8fafc;
+        background-color: #f1f5f9;
         color: #0f172a !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
@@ -46,16 +47,16 @@ st.markdown(
     
     h1, h2, h3, h4, h5, h6 {
         color: #0f172a !important;
-        font-weight: 600;
+        font-weight: 700;
     }
 
-    /* Main Card Layout mimicking Flask container */
+    /* Card layout */
     .main-card {
         background-color: #ffffff;
         padding: 40px;
         border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #cbd5e1;
         max-width: 750px;
         margin: auto;
     }
@@ -73,39 +74,40 @@ st.markdown(
     }
     .brand-subtitle {
         text-align: center;
-        color: #64748b;
+        color: #475569;
         font-size: 1rem;
         margin-bottom: 30px;
+        font-weight: 500;
     }
 
-    /* Custom Radio Navigation Bar (Flask style pills) */
+    /* Custom Radio Navigation Bar Styling for High Contrast */
     .stRadio > div {
-        background-color: #f1f5f9;
+        background-color: #e2e8f0;
         padding: 6px;
         border-radius: 12px;
         display: flex;
         justify-content: center;
         gap: 6px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid #cbd5e1;
     }
     .stRadio > div > label {
         background-color: transparent !important;
         padding: 8px 24px;
         border-radius: 8px;
-        font-weight: 500;
-        color: #475569 !important;
+        font-weight: 600;
+        color: #334155 !important;
         cursor: pointer;
         transition: all 0.2s ease;
     }
     .stRadio > div > label[data-checked="true"] {
         background-color: #ffffff !important;
-        color: #2563eb !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        color: #1d4ed8 !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
 
     /* Upload Box container */
     .upload-section {
-        border: 2px dashed #cbd5e1;
+        border: 2px dashed #94a3b8;
         border-radius: 12px;
         padding: 30px;
         text-align: center;
@@ -114,9 +116,9 @@ st.markdown(
         margin-bottom: 20px;
     }
 
-    /* Custom Buttons matching Flask slate color */
+    /* Custom Buttons */
     .stButton>button {
-        background-color: #475569;
+        background-color: #1e293b;
         color: #ffffff !important;
         border-radius: 8px;
         padding: 0.6rem 1.2rem;
@@ -126,26 +128,27 @@ st.markdown(
         transition: background-color 0.2s;
     }
     .stButton>button:hover {
-        background-color: #334155;
+        background-color: #0f172a;
         color: #ffffff !important;
     }
 
-    /* Recommended Games Panel */
+    /* Panels with high-contrast text */
     .games-panel {
         background-color: #ffffff;
-        border: 1px solid #e2e8f0;
+        border: 1px solid #cbd5e1;
         border-radius: 12px;
         padding: 16px 20px;
         margin-top: 24px;
+        color: #0f172a !important;
     }
     
-    /* Info Box Panel */
     .info-panel {
         background-color: #ffffff;
-        border: 1px solid #e2e8f0;
+        border: 1px solid #cbd5e1;
         border-radius: 12px;
         padding: 16px 20px;
         margin-top: 16px;
+        color: #0f172a !important;
     }
     </style>
     """,
@@ -269,7 +272,7 @@ def is_likely_mri(image):
 @st.cache_resource
 def load_alzheimer_model():
     if AlzheimerNet is None:
-        raise RuntimeError("AlzheimerNet architecture definition could not be imported from model.alzheimers_model.")
+        raise RuntimeError("AlzheimerNet architecture definition could not be imported.")
     
     possible_sophisticated_paths = [
         os.path.join(script_dir, 'saved_models', 'alzheimer_model_sophisticated.pth'),
@@ -331,14 +334,12 @@ if 'prediction_result' not in st.session_state:
     st.session_state.prediction_result = None
 if 'risk_result' not in st.session_state:
     st.session_state.risk_result = None
-if 'game_result' not in st.session_state:
-    st.session_state.game_result = None
 
 # --- HEADER SECTION ---
 st.markdown('<p class="brand-title">Neuro<span>Alz</span></p>', unsafe_allow_html=True)
 st.markdown('<p class="brand-subtitle">Comprehensive Alzheimer\'s Screening Suite</p>', unsafe_allow_html=True)
 
-# --- NAVIGATION TABS (MATCHING FLASK PILL LAYOUT) ---
+# --- NAVIGATION TABS ---
 selected_tab = st.radio(
     "Navigation",
     ["MRI Analysis", "Cognitive Games", "Risk Profile"],
@@ -451,12 +452,11 @@ if selected_tab == "MRI Analysis":
                 st.write(res['reasoning'])
         st.caption(f"Model Engine: {res['model_version']}")
 
-    # Recommended Games Panel matching reference UI
     st.markdown(
         """
         <div class="games-panel">
             <strong>More Recommended Games</strong><br>
-            <span style="font-size: 0.9rem; color: #64748b;">Checkers &nbsp;&bull;&nbsp; Mahjong &nbsp;&bull;&nbsp; Connect 4 &nbsp;&bull;&nbsp; Rummikub &nbsp;&bull;&nbsp; Sudoku</span>
+            <span style="font-size: 0.9rem; color: #334155;">Checkers &nbsp;&bull;&nbsp; Mahjong &nbsp;&bull;&nbsp; Connect 4 &nbsp;&bull;&nbsp; Rummikub &nbsp;&bull;&nbsp; Sudoku</span>
         </div>
         """,
         unsafe_allow_html=True
@@ -466,7 +466,7 @@ if selected_tab == "MRI Analysis":
         """
         <div class="info-panel">
             <strong>AI Neuro-Analysis</strong><br>
-            <span style="font-size: 0.9rem; color: #64748b;">Complete both modules to generate a full brain health report.</span>
+            <span style="font-size: 0.9rem; color: #334155;">Complete both modules to generate a full brain health report.</span>
         </div>
         """,
         unsafe_allow_html=True
@@ -474,24 +474,150 @@ if selected_tab == "MRI Analysis":
 
 # ==================== TAB 2: COGNITIVE GAMES ====================
 elif selected_tab == "Cognitive Games":
-    st.header("Cognitive Engagement: 20 Questions")
-    st.markdown("Test deductive logic by playing a word game with the system host.")
+    st.header("Cognitive Engagement & Screening Modules")
+    st.markdown("Select a specialized evaluation module to test neuro-cognitive responsiveness.")
 
-    if 'game_word' not in st.session_state:
-        st.session_state.game_word = random.choice(["brain", "neuron", "memory", "synapse", "cortex"])
+    game_sub_tab = st.selectbox(
+        "Choose Screening Test", 
+        ["Processing Speed (Red/Green Reflex)", "Hippocampal Function (Pattern Match)", "Verbal Memory (Short Story Test)"]
+    )
 
-    user_question = st.text_input("Ask a Yes/No question about the secret medical term:")
-    
-    if st.button("Submit Question"):
-        q_lower = user_question.lower()
-        if not any(q_lower.startswith(w) for w in ["is", "are", "do", "does", "can", "has", "have", "will", "was"]):
-            answer = "Please ask a Yes/No question."
-        else:
-            answer = "Yes" if random.random() > 0.5 else "No"
-        st.session_state.game_result = answer
+    st.markdown("---")
 
-    if st.session_state.get('game_result'):
-        st.write(f"**Host Response:** {st.session_state.game_result}")
+    # --- MODULE 1: PROCESSING SPEED ---
+    if game_sub_tab == "Processing Speed (Red/Green Reflex)":
+        st.subheader("Processing Speed Reflex Assessment")
+        st.markdown("Instructions: Click **Green** targets as fast as possible when they appear. Avoid clicking **Red** targets.")
+
+        if 'reflex_state' not in st.session_state:
+            st.session_state.reflex_state = 'IDLE'
+            st.session_state.reflex_target = None
+            st.session_state.reflex_start_time = 0
+            st.session_state.reflex_score = 0
+            st.session_state.reflex_rounds = 0
+
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            start_reflex = st.button("Start Reflex Test")
+        
+        if start_reflex:
+            st.session_state.reflex_state = 'ACTIVE'
+            st.session_state.reflex_target = random.choice(['GREEN', 'RED', 'GREEN', 'GREEN', 'RED'])
+            st.session_state.reflex_start_time = time.time()
+            st.session_state.reflex_rounds += 1
+
+        if st.session_state.reflex_state == 'ACTIVE':
+            target = st.session_state.reflex_target
+            st.markdown(f"### Target Signal: **{target}**")
+            
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button("🔴 Click RED", key="click_red"):
+                    reaction_time = time.time() - st.session_state.reflex_start_time
+                    if target == 'RED':
+                        st.session_state.reflex_score += 1
+                        st.success(f"Correct! Reaction Time: {reaction_time:.2f}s")
+                    else:
+                        st.error("Incorrect! That was a Green target.")
+                    st.session_state.reflex_state = 'IDLE'
+            with c2:
+                if st.button("🟢 Click GREEN", key="click_green"):
+                    reaction_time = time.time() - st.session_state.reflex_start_time
+                    if target == 'GREEN':
+                        st.session_state.reflex_score += 1
+                        st.success(f"Correct! Reaction Time: {reaction_time:.2f}s")
+                    else:
+                        st.error("Incorrect! That was a Red target.")
+                    st.session_state.reflex_state = 'IDLE'
+
+        st.write(f"**Current Score:** {st.session_state.reflex_score} correct responses.")
+
+    # --- MODULE 2: HIPPOCAMPAL FUNCTION ---
+    elif game_sub_tab == "Hippocampal Function (Pattern Match)":
+        st.subheader("Hippocampal Spatial Pattern Matching")
+        st.markdown("Observe the grid pattern below, then recreate it by selecting the matching sequence.")
+
+        if 'pattern_target' not in st.session_state:
+            st.session_state.pattern_target = [random.choice([0, 1]) for _ in range(4)]
+            st.session_state.pattern_stage = 'SHOW'
+
+        if st.session_state.pattern_stage == 'SHOW':
+            st.info(f"Memorize Pattern Sequence: **{st.session_state.pattern_target}** (1 = Active, 0 = Inactive)")
+            if st.button("I'm Ready - Input Pattern"):
+                st.session_state.pattern_stage = 'INPUT'
+                st.rerun()
+
+        elif st.session_state.pattern_stage == 'INPUT':
+            st.markdown("Select your matched pattern grid:")
+            p1 = st.selectbox("Tile 1", [0, 1], key="t1")
+            p2 = st.selectbox("Tile 2", [0, 1], key="t2")
+            p3 = st.selectbox("Tile 3", [0, 1], key="t3")
+            p4 = st.selectbox("Tile 4", [0, 1], key="t4")
+
+            if st.button("Submit Pattern"):
+                user_pattern = [p1, p2, p3, p4]
+                if user_pattern == st.session_state.pattern_target:
+                    st.success("Pattern match successful! Hippocampal recall functional.")
+                else:
+                    st.error(f"Mismatch! Correct pattern was {st.session_state.pattern_target}.")
+                if st.button("Play Again"):
+                    st.session_state.pattern_target = [random.choice([0, 1]) for _ in range(4)]
+                    st.session_state.pattern_stage = 'SHOW'
+                    st.rerun()
+
+    # --- MODULE 3: VERBAL MEMORY ---
+    elif game_sub_tab == "Verbal Memory (Short Story Test)":
+        st.subheader("Verbal Memory & Short Story Recall")
+        st.markdown("Read the short 3-line story carefully. A 30-second countdown will begin before questions are asked.")
+
+        if 'story_state' not in st.session_state:
+            st.session_state.story_state = 'READING'
+            st.session_state.story_timer = 30
+            st.session_state.story_start_time = time.time()
+
+        story_text = (
+            "1. Dr. Arthur walked through the rainy hospital corridors holding a blue file.\n"
+            "2. He met Nurse Clara near room 302 to discuss the morning patient charts.\n"
+            "3. They verified that the medication schedule was successfully updated for noon."
+        )
+
+        if st.session_state.story_state == 'READING':
+            st.markdown(f"> **Story Passage:**\n> \n> {story_text}")
+            
+            elapsed = int(time.time() - st.session_state.story_start_time)
+            remaining = max(0, 30 - elapsed)
+            
+            st.markdown(f"### Time remaining to memorize: **{remaining} seconds**")
+            
+            if remaining > 0:
+                if st.button("Skip Countdown & Answer Now"):
+                    st.session_state.story_state = 'QUESTIONING'
+                    st.rerun()
+                time.sleep(1)
+                st.rerun()
+            else:
+                st.session_state.story_state = 'QUESTIONING'
+                st.rerun()
+
+        elif st.session_state.story_state == 'QUESTIONING':
+            st.markdown("### Recall Questions:")
+            ans1 = st.radio("Question 1: What color was the file Dr. Arthur was holding?", ["Red", "Blue", "Green", "Yellow"])
+            ans2 = st.radio("Question 2: Which room number were they near?", ["Room 104", "Room 205", "Room 302", "Room 410"])
+
+            if st.button("Submit Answers"):
+                score_v = 0
+                if ans1 == "Blue": score_v += 1
+                if ans2 == "Room 302": score_v += 1
+                
+                if score_v == 2:
+                    st.success("Perfect recall! Verbal memory score: 2/2.")
+                else:
+                    st.warning(f"Recall score: {score_v}/2 correct. (Correct answers: Blue file, Room 302)")
+                
+                if st.button("Restart Story Test"):
+                    st.session_state.story_state = 'READING'
+                    st.session_state.story_start_time = time.time()
+                    st.rerun()
 
 # ==================== TAB 3: RISK PROFILE ====================
 elif selected_tab == "Risk Profile":
