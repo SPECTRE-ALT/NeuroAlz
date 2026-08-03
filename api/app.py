@@ -30,7 +30,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- HIGH-CONTRAST MODERN UI STYLING (INVERTED PANELS: WHITE BACKGROUND & BLACK TEXT) ---
+# --- HIGH-CONTRAST MODERN UI STYLING (WHITE BACKGROUNDS & BLACK TEXT FOR ALL PANELS/DROPDOWNS) ---
 st.markdown(
     """
     <style>
@@ -116,7 +116,7 @@ st.markdown(
         margin-bottom: 20px;
     }
 
-    /* Custom Buttons */
+    /* Standard Custom Buttons (Dark Theme) */
     .stButton>button {
         background-color: #1e293b;
         color: #ffffff !important;
@@ -130,6 +130,17 @@ st.markdown(
     .stButton>button:hover {
         background-color: #0f172a;
         color: #ffffff !important;
+    }
+
+    /* Specific White Card Styling for "Start Reflex Test" and Dropdown / Select Box Containers */
+    div[data-baseweb="select"] > div {
+        background-color: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #000000 !important;
+        border-radius: 8px;
+    }
+    div[data-baseweb="select"] span, div[data-baseweb="select"] div {
+        color: #000000 !important;
     }
 
     /* Inverted Boxes: White Background with Forced Black Text */
@@ -214,6 +225,20 @@ st.markdown(
         box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
     .reflex-box-waiting * {
+        color: #000000 !important;
+    }
+
+    /* Specific White Box Container Styling for Start Reflex Test Section */
+    .start-reflex-card {
+        background-color: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 15px 0;
+        color: #000000 !important;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .start-reflex-card *, .start-reflex-card strong, .start-reflex-card span, .start-reflex-card p {
         color: #000000 !important;
     }
     </style>
@@ -543,10 +568,13 @@ elif selected_tab == "Cognitive Games":
     st.header("Cognitive Engagement & Screening Modules")
     st.markdown("Select a specialized evaluation module to test neuro-cognitive responsiveness.")
 
+    # Wrapped inside a white container matching user preference for choosing screening text
+    st.markdown('<div class="start-reflex-card">', unsafe_allow_html=True)
     game_sub_tab = st.selectbox(
         "Choose Screening Test", 
         ["Processing Speed (Red/Green Reflex)", "Hippocampal Function (Pattern Match)", "Verbal Memory (Short Story Test)"]
     )
+    st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---")
 
@@ -562,9 +590,12 @@ elif selected_tab == "Cognitive Games":
             st.session_state.reflex_score = 0
             st.session_state.reflex_rounds = 0
 
+        # Wrapped inside a white card box for "Start Reflex Test"
+        st.markdown('<div class="start-reflex-card">', unsafe_allow_html=True)
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
             start_reflex = st.button("Start Reflex Test")
+        st.markdown('</div>', unsafe_allow_html=True)
         
         if start_reflex:
             # Simulate a brief delay before flashing a random red/green signal box
