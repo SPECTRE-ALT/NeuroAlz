@@ -30,7 +30,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- HIGH-CONTRAST MODERN UI STYLING (WHITE BACKGROUNDS & BLACK TEXT FOR ALL PANELS/DROPDOWNS) ---
+# --- GLOBAL UI & BUTTON READABILITY CSS (PASTE EXACTLY HERE) ---
 st.markdown(
     """
     <style>
@@ -116,20 +116,30 @@ st.markdown(
         margin-bottom: 20px;
     }
 
-    /* Standard Custom Buttons */
+    /* GLOBAL BUTTON READABILITY FIX (Option 1: Clean White Background, Dark/Black Text, Blue Border Accent) */
     .stButton>button {
-        background-color: #1e293b;
-        color: #ffffff !important;
+        background-color: #ffffff !important;
+        color: #0f172a !important;
         border-radius: 8px;
         padding: 0.6rem 1.2rem;
         font-weight: 600;
         width: 100%;
-        border: none;
-        transition: background-color 0.2s;
+        border: 1px solid #2563eb !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        transition: all 0.2s ease;
     }
     .stButton>button:hover {
-        background-color: #0f172a;
-        color: #ffffff !important;
+        background-color: #eff6ff !important;
+        color: #1d4ed8 !important;
+        border-color: #1d4ed8 !important;
+    }
+    .stButton>button:focus {
+        color: #1d4ed8 !important;
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
+    .stButton>button * {
+        color: inherit !important;
     }
 
     /* Selectbox and Dropdown Container Fixes for Readability */
