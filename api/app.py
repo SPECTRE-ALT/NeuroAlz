@@ -29,10 +29,91 @@ st.set_page_config(
     layout="wide"
 )
 
+# --- MODERN MEDICAL UI STYLING (WHITE & BLUE ACCENT, NO EMOJIS) ---
+st.markdown(
+    """
+    <style>
+    /* Global Styles */
+    .stApp {
+        background-color: #f8fafc;
+        color: #1e293b;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    
+    /* Headers & Typography */
+    h1, h2, h3, h4, h5, h6 {
+        color: #0f172a;
+        font-weight: 600;
+    }
+    
+    /* Disclaimer Card */
+    .disclaimer-box {
+        background-color: #eff6ff;
+        border-left: 4px solid #3b82f6;
+        padding: 12px 16px;
+        border-radius: 4px;
+        margin-bottom: 24px;
+        color: #1e3a8a;
+        font-size: 0.9rem;
+        font-weight: 500;
+        text-align: center;
+    }
+
+    /* Custom Cards / Containers */
+    .metric-card {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 16px;
+    }
+
+    /* Buttons */
+    .stButton>button {
+        background-color: #2563eb;
+        color: #ffffff;
+        border-radius: 6px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        border: none;
+        transition: background-color 0.2s;
+    }
+    .stButton>button:hover {
+        background-color: #1d4ed8;
+        color: #ffffff;
+    }
+
+    /* Tabs Styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background-color: #ffffff;
+        padding: 8px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 40px;
+        white-space: pre-wrap;
+        background-color: transparent;
+        border-radius: 6px;
+        color: #64748b;
+        font-weight: 500;
+        border: none;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #2563eb !important;
+        color: #ffffff !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # --- DISCLAIMER ---
 st.markdown(
     """
-    <div style="background-color: #ffcccc; padding: 10px; border-radius: 5px; margin-bottom: 20px; color: #990000; text-align: center; font-weight: bold;">
+    <div class="disclaimer-box">
         DISCLAIMER: This AI system is a research prototype and not a medical diagnosis tool.
     </div>
     """,
@@ -144,8 +225,9 @@ def is_likely_mri(image):
         
         diff = np.abs(arr1 - arr2).mean()
         
-        if diff > 30:
-            return False, f"REJECTED: Structural asymmetry detected ({diff:.1f}). This does not match brain morphology (Possible Knee/Bone scan)."
+        # Relaxed symmetry threshold to accommodate normal variations in valid brain MRIs
+        if diff > 55:
+            return False, f"REJECTED: Structural asymmetry detected ({diff:.1f}). This does not match brain morphology."
     except Exception as e:
         print(f"Symmetry check skipped: {e}")
 
@@ -226,8 +308,8 @@ if 'game_result' not in st.session_state:
     st.session_state.game_result = None
 
 # --- STREAMLIT UI LAYOUT ---
-st.title("🧠 NeuroAlz - AI Alzheimer's Detection Platform")
-st.markdown("Advanced neuroimaging analysis and risk assessment powered by deep learning.")
+st.title("NeuroAlz AI Platform")
+st.markdown("Advanced neuroimaging analysis and clinical risk assessment powered by deep learning.")
 
 tab1, tab2, tab3 = st.tabs(["MRI Analysis", "Risk Assessment", "20 Questions Game"])
 
@@ -293,16 +375,16 @@ with tab1:
                         details = {cls: float(prob) * 100 for cls, prob in zip(classes, probabilities)}
 
                         clinical_summaries = {
-                            'nondemented': "Stable neuro-structural integrity. MRI shows normal cortical thickness and healthy hippocampal volume for chronological age.",
-                            'very mild': "Early neurodegenerative markers detected. Minor reduction in medial temporal lobe volume and subtle ventricular expansion noted.",
-                            'mild demented': "Significant structural indicators of dementia. Progressed atrophy in the hippocampal complex and visible cortical thinning in parietal regions.",
-                            'moderate demented': "Advanced neurodegenerative progression. Severe and diffuse cerebral atrophy with significant enlargement of cerebrospinal fluid (CSF) spaces."
+                            'nondemented': "Stable neuro-structural integrity. MRI shows normal cortical thickness and healthy neural patterns for chronological age.",
+                            'very mild': "Early neurodegenerative markers detected. Minor structural variations and subtle ventricular expansion noted.",
+                            'mild demented': "Significant structural indicators of dementia. Progressed atrophy patterns and visible cortical thinning.",
+                            'moderate demented': "Advanced neurodegenerative progression. Severe and diffuse cerebral atrophy with significant enlargement of fluid spaces."
                         }
 
                         clinical_reasoning = {
                             'nondemented': """
 ### Structural Integrity Assessment
-*   **Hippocampal Volume**: AI pattern interpretation based on learned MRI features.
+*   **Neural Density**: AI pattern interpretation based on learned MRI features.
 *   **Ventricular System**: AI pattern interpretation based on learned MRI features.
 *   **Cortical Thickness**: AI pattern interpretation based on learned MRI features.
 *   **White Matter**: AI pattern interpretation based on learned MRI features.
@@ -311,7 +393,7 @@ with tab1:
 
                             'very mild': """
 ### Early-Stage Marker Analysis
-*   **Hippocampal Complex**: AI pattern interpretation based on learned MRI features.
+*   **Complex Topology**: AI pattern interpretation based on learned MRI features.
 *   **Cortical Observations**: AI pattern interpretation based on learned MRI features.
 *   **Vascular/Fluid**: AI pattern interpretation based on learned MRI features.
 *   **Pathological Correlation**: AI pattern interpretation based on learned MRI features.
