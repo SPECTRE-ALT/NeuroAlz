@@ -29,31 +29,36 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- MODERN MEDICAL UI STYLING (WHITE & BLUE ACCENT, NO EMOJIS) ---
+# --- MODERN MEDICAL UI STYLING (WHITE & BLUE ACCENT, NO EMOJIS, BLACK TEXT) ---
 st.markdown(
     """
     <style>
-    /* Global Styles */
+    /* Global App Container Styles */
     .stApp {
         background-color: #f8fafc;
-        color: #1e293b;
+        color: #0f172a !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    
+    /* Force all text elements to be dark/black for high visibility */
+    p, span, label, div, .stMarkdown, .stText, li {
+        color: #1e293b !important;
     }
     
     /* Headers & Typography */
     h1, h2, h3, h4, h5, h6 {
-        color: #0f172a;
+        color: #0f172a !important;
         font-weight: 600;
     }
     
     /* Disclaimer Card */
     .disclaimer-box {
         background-color: #eff6ff;
-        border-left: 4px solid #3b82f6;
+        border-left: 4px solid #2563eb;
         padding: 12px 16px;
         border-radius: 4px;
         margin-bottom: 24px;
-        color: #1e3a8a;
+        color: #1e3a8a !important;
         font-size: 0.9rem;
         font-weight: 500;
         text-align: center;
@@ -67,12 +72,13 @@ st.markdown(
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         border: 1px solid #e2e8f0;
         margin-bottom: 16px;
+        color: #0f172a !important;
     }
 
     /* Buttons */
     .stButton>button {
         background-color: #2563eb;
-        color: #ffffff;
+        color: #ffffff !important;
         border-radius: 6px;
         padding: 0.5rem 1rem;
         font-weight: 500;
@@ -81,7 +87,7 @@ st.markdown(
     }
     .stButton>button:hover {
         background-color: #1d4ed8;
-        color: #ffffff;
+        color: #ffffff !important;
     }
 
     /* Tabs Styling */
@@ -97,7 +103,7 @@ st.markdown(
         white-space: pre-wrap;
         background-color: transparent;
         border-radius: 6px;
-        color: #64748b;
+        color: #475569 !important;
         font-weight: 500;
         border: none;
     }
@@ -161,7 +167,8 @@ def check_semantic_content(image):
         score = prediction[class_id].item()
         category_name = security_categories[class_id]
         
-        print(f"Security Scan: detected '{category_name}' with confidence {score:.2f}")
+        # DEBUG OUTPUT: MobileNet detection
+        print(f"[DEBUG] MobileNet Security Scan: detected '{category_name}' with confidence {score:.2f}")
 
         forbidden_keywords = [
             'car', 'wagon', 'vehicle', 'truck', 'racer', 'wheel', 'convertible', 'jeep', 'cab',
@@ -170,12 +177,12 @@ def check_semantic_content(image):
             'keyboard', 'laptop', 'mouse', 'phone', 'screen', 'monitor',
             'food', 'fruit', 'vegetable', 'pizza', 'burger', 'sandwich',
             'fish', 'shark', 'whale', 'shoe', 'sock', 'clothing',
-            'knee', 'joint', 'elbow', 'hand', 'foot', 'bone'
+            'knee', 'joint', 'elbow', 'hand', 'foot', 'bone', 'leg'
         ]
         
         is_forbidden = any(keyword in category_name.lower() for keyword in forbidden_keywords)
         
-        if is_forbidden and score > 0.15: 
+        if is_forbidden and score > 0.12: 
              return False, f"Content detected as '{category_name}' ({score*100:.1f}% confidence). This does not look like an MRI."
              
     except Exception as e:
@@ -189,14 +196,19 @@ def is_likely_mri(image):
     Validates if the image looks like a grayscale MRI scan and matches brain morphology.
     Returns (True, None) or (False, reasoning).
     """
+    # 1. Color Saturation Check
     img_hsv = image.convert('HSV')
     saturation = img_hsv.split()[1]
     stat = ImageStat.Stat(saturation)
     avg_saturation = stat.mean[0]
     
-    if avg_saturation > 35:
+    # DEBUG OUTPUT: Saturation score
+    print(f"[DEBUG] Saturation score: {avg_saturation:.1f}")
+    
+    if avg_saturation > 30:
         return False, f"FAKE MRI DETECTED: Image has too much color (Saturation: {avg_saturation:.1f}). Verification failed."
 
+    # 2. Corner Background Check
     gray = image.convert('L')
     w, h = gray.size
     corners = [
@@ -207,16 +219,22 @@ def is_likely_mri(image):
     ]
     
     bright_corners = 0
+    corner_bright_values = []
     for box in corners:
         region = gray.crop(box)
         stat = ImageStat.Stat(region)
         avg_brightness = stat.mean[0]
-        if avg_brightness > 60:
+        corner_bright_values.append(avg_brightness)
+        if avg_brightness > 55:
             bright_corners += 1
             
+    # DEBUG OUTPUT: Corner brightness score
+    print(f"[DEBUG] Corner brightness scores: {corner_bright_values} (Bright count: {bright_corners}/4)")
+
     if bright_corners == 4:
         return False, "FAKE MRI DETECTED: Image lacks the typical dark background of an MRI scan."
 
+    # 3. Symmetry Check (Optimized boundary: Brains pass, Knees/Asymmetric non-brain scans fail)
     try:
         small_gray = gray.resize((100, 100))
         flipped = ImageOps.mirror(small_gray)
@@ -225,8 +243,15 @@ def is_likely_mri(image):
         
         diff = np.abs(arr1 - arr2).mean()
         
-        if diff > 55:
-            return False, f"REJECTED: Structural asymmetry detected ({diff:.1f}). This does not match brain morphology."
+        # DEBUG OUTPUT: Symmetry difference score
+        print(f"[DEBUG] Symmetry difference score: {diff:.1f}")
+        
+        if diff < 12.0:
+            return False, f"REJECTED: Image lacks sufficient biological structural variation (Symmetry Diff: {diff:.1f})."
+        
+        if diff > 35.0:
+            return False, f"REJECTED: Structural asymmetry detected ({diff:.1f}). This does not match brain morphology (Possible Knee/Bone scan)."
+            
     except Exception as e:
         print(f"Symmetry check skipped: {e}")
 
