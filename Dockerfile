@@ -1,4 +1,4 @@
-# 1. Use Python 3.10 (Matches your Render setup)
+# 1. Use Python 3.10
 FROM python:3.10-slim
 
 # 2. Set the working directory
@@ -6,7 +6,8 @@ WORKDIR /code
 
 # 3. Install system libraries for image processing (OpenCV/PIL)
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
+    libgl1 \
+    libglx0 \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
