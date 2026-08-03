@@ -451,11 +451,31 @@ def load_health_dataset():
 
 health_df = load_health_dataset()
 
-# --- SESSION STATE ---
+# --- SESSION STATE INITIALIZATION ---
 if 'prediction_result' not in st.session_state:
     st.session_state.prediction_result = None
 if 'risk_result' not in st.session_state:
     st.session_state.risk_result = None
+
+# Comprehensive Reactor Game Session State Initialization
+if "reactor_state" not in st.session_state:
+    st.session_state.reactor_state = 'IDLE'
+if "reactor_sequence" not in st.session_state:
+    st.session_state.reactor_sequence = []
+if "reactor_score" not in st.session_state:
+    st.session_state.reactor_score = 0
+if "reactor_best_score" not in st.session_state:
+    st.session_state.reactor_best_score = 0
+if "reactor_current_index" not in st.session_state:
+    st.session_state.reactor_current_index = 0
+if "reactor_player_input" not in st.session_state:
+    st.session_state.reactor_player_input = []
+if "reactor_showing_sequence" not in st.session_state:
+    st.session_state.reactor_showing_sequence = False
+if "reactor_game_over" not in st.session_state:
+    st.session_state.reactor_game_over = False
+if "reactor_can_click" not in st.session_state:
+    st.session_state.reactor_can_click = False
 
 # --- HEADER SECTION ---
 st.markdown('<p class="brand-title">Neuro<span>Alz</span></p>', unsafe_allow_html=True)
@@ -679,58 +699,80 @@ elif selected_tab == "Cognitive Games":
         st.subheader("Hippocampal Spatial Pattern Matching (Reactor Pattern)")
         st.markdown("Tests spatial memory, sequence recall, and hippocampal pattern recognition.")
 
-        if 'reactor_state' not in st.session_state:
+        # Ensure all required state variables exist
+        if "reactor_state" not in st.session_state:
             st.session_state.reactor_state = 'IDLE'
+        if "reactor_sequence" not in st.session_state:
             st.session_state.reactor_sequence = []
-            st.session_state.reactor_current_input_index = 0
+        if "reactor_score" not in st.session_state:
             st.session_state.reactor_score = 0
-            st.session_state.reactor_highest_score = 0
+        if "reactor_best_score" not in st.session_state:
+            st.session_state.reactor_best_score = 0
+        if "reactor_current_index" not in st.session_state:
+            st.session_state.reactor_current_index = 0
+        if "reactor_player_input" not in st.session_state:
+            st.session_state.reactor_player_input = []
+        if "reactor_showing_sequence" not in st.session_state:
             st.session_state.reactor_showing_sequence = False
+        if "reactor_game_over" not in st.session_state:
             st.session_state.reactor_game_over = False
+        if "reactor_can_click" not in st.session_state:
+            st.session_state.reactor_can_click = False
 
         def handle_tile_click(tile_idx):
-            if st.session_state.reactor_showing_sequence or st.session_state.reactor_game_over:
+            if st.session_state.get("reactor_showing_sequence", False) or st.session_state.get("reactor_game_over", False):
                 return
             
-            expected = st.session_state.reactor_sequence[st.session_state.reactor_current_input_index]
-            if tile_idx == expected:
-                st.session_state.reactor_current_input_index += 1
-                if st.session_state.reactor_current_input_index >= len(st.session_state.reactor_sequence):
-                    # Round cleared, append a new random tile
-                    st.session_state.reactor_score += 1
-                    if st.session_state.reactor_score > st.session_state.reactor_highest_score:
-                        st.session_state.reactor_highest_score = st.session_state.reactor_score
+            seq = st.session_state.get("reactor_sequence", [])
+            idx = st.session_state.get("reactor_current_index", 0)
+            
+            if idx < len(seq) and tile_idx == seq[idx]:
+                st.session_state.reactor_current_index = idx + 1
+                if st.session_state.reactor_current_index >= len(seq):
+                    # Round cleared, append a new random tile avoiding immediate duplicate if possible, else standard choice
+                    st.session_state.reactor_score = st.session_state.get("reactor_score", 0) + 1
+                    current_score = st.session_state.reactor_score
+                    if current_score > st.session_state.get("reactor_best_score", 0):
+                        st.session_state.reactor_best_score = current_score
                     
                     next_tile = random.randint(1, 9)
+                    # Try to avoid immediate repetition if possible by chance
+                    if len(seq) > 0 and next_tile == seq[-1]:
+                        next_tile = random.randint(1, 9)
+                        
                     st.session_state.reactor_sequence.append(next_tile)
-                    st.session_state.reactor_current_input_index = 0
+                    st.session_state.reactor_current_index = 0
                     st.session_state.reactor_showing_sequence = True
             else:
                 st.session_state.reactor_game_over = True
                 st.session_state.reactor_state = 'GAME_OVER'
 
-        if st.session_state.reactor_state == 'IDLE':
+        current_state = st.session_state.get("reactor_state", 'IDLE')
+
+        if current_state == 'IDLE':
             st.markdown(
                 '<div class="reflex-box-waiting">Memorize the highlighted tile sequence on the 3x3 grid and repeat it back in the correct order. Each round adds a new random tile.</div>',
                 unsafe_allow_html=True
             )
             if st.button("Start Reactor Game", key="start_reactor_game"):
-                st.session_state.reactor_sequence = [random.randint(1, 9)]
-                st.session_state.reactor_current_input_index = 0
+                first_tile = random.randint(1, 9)
+                st.session_state.reactor_sequence = [first_tile]
+                st.session_state.reactor_current_index = 0
                 st.session_state.reactor_score = 0
                 st.session_state.reactor_game_over = False
                 st.session_state.reactor_showing_sequence = True
                 st.session_state.reactor_state = 'PLAYING'
                 st.rerun()
 
-        elif st.session_state.reactor_state == 'PLAYING':
-            # Display current stats
-            st.markdown(f"**Score:** {st.session_state.reactor_score} &nbsp;&bull;&nbsp; **Sequence Length:** {len(st.session_state.reactor_sequence)}")
+        elif current_state == 'PLAYING':
+            score_val = st.session_state.get("reactor_score", 0)
+            seq_len = len(st.session_state.get("reactor_sequence", []))
+            st.markdown(f"**Score:** {score_val} &nbsp;&bull;&nbsp; **Sequence Length:** {seq_len}")
 
-            if st.session_state.reactor_showing_sequence:
+            if st.session_state.get("reactor_showing_sequence", False):
                 st.info("Watch the sequence playback...")
                 
-                # Render grid with sequence playback animation
+                # Render grid placeholder
                 for r in range(3):
                     cols = st.columns(3)
                     for c in range(3):
@@ -738,10 +780,11 @@ elif selected_tab == "Cognitive Games":
                         with cols[c]:
                             st.markdown(f'<div style="background-color: #ffffff; color: #1e293b !important; padding: 30px; text-align: center; border-radius: 12px; font-weight: bold; font-size: 1.1rem; border: 1px solid #cbd5e1;">Tile {tile_num}</div>', unsafe_allow_html=True)
 
-                # Play sequence visually using time.sleep
+                # Play sequence visually using time.sleep without page jumping or re-triggering issues
                 time.sleep(0.5)
-                for idx in st.session_state.reactor_sequence:
-                    # Render currently highlighted tile
+                seq_to_show = st.session_state.get("reactor_sequence", [])
+                for idx in seq_to_show:
+                    # Flash active tile
                     for r in range(3):
                         cols = st.columns(3)
                         for c in range(3):
@@ -753,7 +796,7 @@ elif selected_tab == "Cognitive Games":
                                     st.markdown(f'<div style="background-color: #ffffff; color: #1e293b !important; padding: 30px; text-align: center; border-radius: 12px; font-weight: bold; font-size: 1.1rem; border: 1px solid #cbd5e1;">Tile {tile_num}</div>', unsafe_allow_html=True)
                     time.sleep(0.6)
                     
-                    # Pause briefly back to normal grid between flashes
+                    # Return grid to normal state between flashes
                     for r in range(3):
                         cols = st.columns(3)
                         for c in range(3):
@@ -776,14 +819,18 @@ elif selected_tab == "Cognitive Games":
                         with cols[c]:
                             st.button(f"Tile {tile_num}", key=f"reactor_tile_{tile_num}", on_click=handle_tile_click, args=(tile_num,))
 
-        elif st.session_state.reactor_state == 'GAME_OVER':
+        elif current_state == 'GAME_OVER':
             st.error("Incorrect tile selected! Game Over.")
+            final_scr = st.session_state.get("reactor_score", 0)
+            seq_len = len(st.session_state.get("reactor_sequence", []))
+            best_scr = st.session_state.get("reactor_best_score", 0)
+            
             st.markdown(
                 f'''
                 <div class="reflex-box-waiting">
-                    <b>Final Score:</b> {st.session_state.reactor_score}<br>
-                    <b>Longest Sequence:</b> {len(st.session_state.reactor_sequence)}<br>
-                    <b>Highest Score:</b> {st.session_state.reactor_highest_score}
+                    <b>Final Score:</b> {final_scr}<br>
+                    <b>Longest Sequence:</b> {seq_len}<br>
+                    <b>Highest Score:</b> {best_scr}
                 </div>
                 ''',
                 unsafe_allow_html=True
@@ -791,7 +838,7 @@ elif selected_tab == "Cognitive Games":
             if st.button("Restart Reactor Game", key="restart_reactor"):
                 st.session_state.reactor_state = 'IDLE'
                 st.session_state.reactor_sequence = []
-                st.session_state.reactor_current_input_index = 0
+                st.session_state.reactor_current_index = 0
                 st.session_state.reactor_score = 0
                 st.session_state.reactor_showing_sequence = False
                 st.session_state.reactor_game_over = False
