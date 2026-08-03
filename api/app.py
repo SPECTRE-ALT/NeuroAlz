@@ -30,7 +30,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- HIGH-CONTRAST MODERN UI STYLING (FIXED TEXT & BOX CONTRAST) ---
+# --- HIGH-CONTRAST MODERN UI STYLING (INVERTED PANELS: WHITE BACKGROUND & BLACK TEXT) ---
 st.markdown(
     """
     <style>
@@ -132,39 +132,41 @@ st.markdown(
         color: #ffffff !important;
     }
 
-    /* Dark/Black Boxes with Forced White Text */
+    /* Inverted Boxes: White Background with Forced Black Text */
     .games-panel {
-        background-color: #0f172a !important;
-        border: 1px solid #334155 !important;
+        background-color: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
         border-radius: 12px;
         padding: 16px 20px;
         margin-top: 24px;
-        color: #ffffff !important;
+        color: #000000 !important;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
     .games-panel *, .games-panel strong, .games-panel span {
-        color: #ffffff !important;
+        color: #000000 !important;
     }
     
     .info-panel {
-        background-color: #0f172a !important;
-        border: 1px solid #334155 !important;
+        background-color: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
         border-radius: 12px;
         padding: 16px 20px;
         margin-top: 16px;
-        color: #ffffff !important;
+        color: #000000 !important;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
     .info-panel *, .info-panel strong, .info-panel span {
-        color: #ffffff !important;
+        color: #000000 !important;
     }
 
-    /* Fix Streamlit info, success, warning, error boxes in Cognitive Games and dark contexts */
+    /* Fix Streamlit info, success, warning, error boxes to use White Background and Black Text */
     .stAlert, div[data-baseweb="notification"] {
-        background-color: #0f172a !important;
-        color: #ffffff !important;
-        border: 1px solid #334155 !important;
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        border: 1px solid #cbd5e1 !important;
     }
     .stAlert *, div[data-baseweb="notification"] * {
-        color: #ffffff !important;
+        color: #000000 !important;
     }
 
     /* Reflex Game Box Styling with Visible High-Contrast Text */
@@ -201,17 +203,18 @@ st.markdown(
     }
 
     .reflex-box-waiting {
-        background-color: #334155 !important;
-        border: 2px solid #475569 !important;
+        background-color: #ffffff !important;
+        border: 2px solid #cbd5e1 !important;
         border-radius: 12px;
         padding: 30px;
         text-align: center;
         margin: 20px 0;
-        color: #e2e8f0 !important;
+        color: #000000 !important;
         font-size: 1.2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
     .reflex-box-waiting * {
-        color: #e2e8f0 !important;
+        color: #000000 !important;
     }
     </style>
     """,
