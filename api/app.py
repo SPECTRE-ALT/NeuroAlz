@@ -676,73 +676,77 @@ elif selected_tab == "Cognitive Games":
 
     # --- MODULE 2: HIPPOCAMPAL FUNCTION ---
     elif game_sub_tab == "Hippocampal Function (Pattern Match)":
-        st.subheader("Hippocampal Spatial Pattern Matching")
-        st.markdown("Tests spatial memory, sequence recall, and hippocampal pattern recognition.")
+        st.subheader("Hippocampal Spatial Pattern Matching (Reactor Pattern)")
+        st.markdown("Tests working memory and hippocampal pattern recognition. Repeat the tile sequence in the correct order.")
 
         if 'reactor_state' not in st.session_state:
             st.session_state.reactor_state = 'IDLE'
             st.session_state.reactor_sequence = []
             st.session_state.reactor_player_index = 0
             st.session_state.reactor_round = 0
-            st.session_state.reactor_highlight = None
+            st.session_state.reactor_lit_tile = None
+
+        def handle_tile_click(idx):
+            expected_tile = st.session_state.reactor_sequence[st.session_state.reactor_player_index]
+            if idx == expected_tile:
+                st.session_state.reactor_player_index += 1
+                if st.session_state.reactor_player_index >= len(st.session_state.reactor_sequence):
+                    st.session_state.reactor_round += 1
+                    st.session_state.reactor_sequence.append(random.randint(1, 9))
+                    st.session_state.reactor_player_index = 0
+                    st.session_state.reactor_state = 'PLAYING_SEQUENCE'
+                    st.session_state.reactor_lit_tile = st.session_state.reactor_sequence[0]
+            else:
+                st.session_state.reactor_state = 'GAME_OVER'
 
         if st.session_state.reactor_state == 'IDLE':
             st.markdown(
-                '<div class="reflex-box-waiting">Memorize the highlighted tile sequence on the 3x3 grid and repeat it back in the correct order. Each round adds a new tile to the sequence.</div>',
+                '<div class="reflex-box-waiting">Memorize the highlighted tile sequence on the 3x3 grid and repeat it back in the correct order. Each round adds a new random tile.</div>',
                 unsafe_allow_html=True
             )
-            if st.button("Start Reactor Sequence Game", key="start_reactor_game"):
+            if st.button("Start Reactor Game", key="start_reactor_game"):
                 st.session_state.reactor_round = 1
-                st.session_state.reactor_sequence = [random.randint(0, 8)]
+                st.session_state.reactor_sequence = [random.randint(1, 9)]
                 st.session_state.reactor_player_index = 0
+                st.session_state.reactor_lit_tile = st.session_state.reactor_sequence[0]
                 st.session_state.reactor_state = 'PLAYING_SEQUENCE'
                 st.rerun()
 
         elif st.session_state.reactor_state == 'PLAYING_SEQUENCE':
             st.markdown(f"### Watch sequence... Round {st.session_state.reactor_round}")
-            
-            # Render grid with sequence playback
+            st.markdown(f"**Current Sequence Length:** {len(st.session_state.reactor_sequence)}")
+
+            # Render 3x3 grid with active highlighting
             for r in range(3):
                 cols = st.columns(3)
                 for c in range(3):
-                    idx = r * 3 + c
+                    tile_num = r * 3 + c + 1
                     with cols[c]:
-                        is_lit = idx in st.session_state.reactor_sequence
+                        is_lit = (tile_num == st.session_state.reactor_lit_tile)
                         if is_lit:
-                            st.markdown(f'<div style="background-color: #2563eb; color: #ffffff; padding: 25px; text-align: center; border-radius: 8px; font-weight: bold; font-size: 1.2rem; border: 2px solid #1d4ed8;">ACTIVE</div>', unsafe_allow_html=True)
+                            st.markdown(f'<div style="background-color: #2563eb; color: #ffffff !important; padding: 25px; text-align: center; border-radius: 8px; font-weight: bold; font-size: 1.2rem; border: 2px solid #1d4ed8; box-shadow: 0 0 15px rgba(37, 99, 235, 0.6);">Tile {tile_num}<br><span style="font-size:0.8rem; color:#ffffff !important;">ACTIVE</span></div>', unsafe_allow_html=True)
                         else:
-                            st.markdown(f'<div style="background-color: #ffffff; color: #94a3b8; padding: 25px; text-align: center; border-radius: 8px; font-weight: bold; font-size: 1.2rem; border: 1px solid #cbd5e1;">Tile {idx+1}</div>', unsafe_allow_html=True)
+                            st.markdown(f'<div style="background-color: #ffffff; color: #1e293b !important; padding: 25px; text-align: center; border-radius: 8px; font-weight: bold; font-size: 1.2rem; border: 1px solid #cbd5e1;">Tile {tile_num}</div>', unsafe_allow_html=True)
 
-            time.sleep(1.2)
+            time.sleep(1.0)
+            st.session_state.reactor_lit_tile = None
             st.session_state.reactor_state = 'WAITING_INPUT'
             st.rerun()
 
         elif st.session_state.reactor_state == 'WAITING_INPUT':
             st.markdown(f"### Your Turn: Repeat Sequence (Round {st.session_state.reactor_round})")
-            st.markdown("Click the tiles in the exact order they appeared.")
+            st.markdown(f"Progress: {st.session_state.reactor_player_index} / {len(st.session_state.reactor_sequence)} completed.")
 
             for r in range(3):
                 cols = st.columns(3)
                 for c in range(3):
-                    idx = r * 3 + c
+                    tile_num = r * 3 + c + 1
                     with cols[c]:
-                        if st.button(f"Tile {idx+1}", key=f"reactor_tile_{idx}_{st.session_state.reactor_round}_{st.session_state.reactor_player_index}"):
-                            expected_tile = st.session_state.reactor_sequence[st.session_state.reactor_player_index]
-                            if idx == expected_tile:
-                                st.session_state.reactor_player_index += 1
-                                if st.session_state.reactor_player_index >= len(st.session_state.reactor_sequence):
-                                    st.session_state.reactor_round += 1
-                                    st.session_state.reactor_sequence.append(random.randint(0, 8))
-                                    st.session_state.reactor_player_index = 0
-                                    st.session_state.reactor_state = 'PLAYING_SEQUENCE'
-                                st.rerun()
-                            else:
-                                st.session_state.reactor_state = 'GAME_OVER'
-                                st.rerun()
+                        st.button(f"Tile {tile_num}", key=f"reactor_tile_{tile_num}", on_click=handle_tile_click, args=(tile_num,))
 
         elif st.session_state.reactor_state == 'GAME_OVER':
             highest_round = max(1, st.session_state.reactor_round - 1)
-            st.error(f"Incorrect tile selected! Game Over.")
+            st.error("Incorrect tile selected! Game Over.")
             st.markdown(
                 f'<div class="reflex-box-waiting"><b>Final Score / Highest Round Reached:</b> {highest_round}</div>',
                 unsafe_allow_html=True
@@ -752,6 +756,7 @@ elif selected_tab == "Cognitive Games":
                 st.session_state.reactor_sequence = []
                 st.session_state.reactor_player_index = 0
                 st.session_state.reactor_round = 0
+                st.session_state.reactor_lit_tile = None
                 st.rerun()
 
     # --- MODULE 3: VERBAL MEMORY ---
