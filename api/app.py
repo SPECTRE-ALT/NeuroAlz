@@ -34,14 +34,14 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    /* Global Container Styles */
+    /* Global Container Styles & UI Readability Fixes */
     .stApp {
         background-color: #f1f5f9;
         color: #0f172a !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
     
-    p, span, label, div, .stMarkdown, .stText, li {
+    p, span, label, div, .stMarkdown, .stText, li, .stRadio label, .stSelectbox label {
         color: #1e293b !important;
     }
     
@@ -116,7 +116,7 @@ st.markdown(
         margin-bottom: 20px;
     }
 
-    /* Standard Custom Buttons (Dark Theme) */
+    /* Standard Custom Buttons */
     .stButton>button {
         background-color: #1e293b;
         color: #ffffff !important;
@@ -132,29 +132,50 @@ st.markdown(
         color: #ffffff !important;
     }
 
-    /* Specific White Card Styling for "Start Reflex Test" and Dropdown / Select Box Containers */
+    /* Selectbox and Dropdown Container Fixes for Readability */
+    div[data-baseweb="select"] {
+        background-color: #ffffff !important;
+    }
     div[data-baseweb="select"] > div {
         background-color: #ffffff !important;
         border: 1px solid #cbd5e1 !important;
-        color: #000000 !important;
+        color: #1e293b !important;
         border-radius: 8px;
     }
-    div[data-baseweb="select"] span, div[data-baseweb="select"] div {
-        color: #000000 !important;
+    div[data-baseweb="select"] span, 
+    div[data-baseweb="select"] div,
+    div[data-baseweb="select"] * {
+        color: #1e293b !important;
+    }
+    
+    /* Popover/Dropdown menu list items fix */
+    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[data-baseweb="menu"] {
+        background-color: #ffffff !important;
+    }
+    div[data-baseweb="popover"] *, div[data-baseweb="menu"] *, ul[data-baseweb="menu"] * {
+        color: #1e293b !important;
+    }
+    li[role="option"] {
+        background-color: #ffffff !important;
+        color: #1e293b !important;
+    }
+    li[role="option"]:hover {
+        background-color: #f1f5f9 !important;
+        color: #1d4ed8 !important;
     }
 
-    /* Inverted Boxes: White Background with Forced Black Text */
+    /* Inverted Boxes: White Background with Forced Dark Text */
     .games-panel {
         background-color: #ffffff !important;
         border: 1px solid #cbd5e1 !important;
         border-radius: 12px;
         padding: 16px 20px;
         margin-top: 24px;
-        color: #000000 !important;
+        color: #1e293b !important;
         box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
     .games-panel *, .games-panel strong, .games-panel span {
-        color: #000000 !important;
+        color: #1e293b !important;
     }
     
     .info-panel {
@@ -163,21 +184,21 @@ st.markdown(
         border-radius: 12px;
         padding: 16px 20px;
         margin-top: 16px;
-        color: #000000 !important;
+        color: #1e293b !important;
         box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
     .info-panel *, .info-panel strong, .info-panel span {
-        color: #000000 !important;
+        color: #1e293b !important;
     }
 
-    /* Fix Streamlit info, success, warning, error boxes to use White Background and Black Text */
+    /* Fix Streamlit info, success, warning, error boxes to use White Background and Dark Text */
     .stAlert, div[data-baseweb="notification"] {
         background-color: #ffffff !important;
-        color: #000000 !important;
+        color: #1e293b !important;
         border: 1px solid #cbd5e1 !important;
     }
     .stAlert *, div[data-baseweb="notification"] * {
-        color: #000000 !important;
+        color: #1e293b !important;
     }
 
     /* Reflex Game Box Styling with Visible High-Contrast Text */
@@ -220,26 +241,26 @@ st.markdown(
         padding: 30px;
         text-align: center;
         margin: 20px 0;
-        color: #000000 !important;
+        color: #1e293b !important;
         font-size: 1.2rem;
         box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
     .reflex-box-waiting * {
-        color: #000000 !important;
+        color: #1e293b !important;
     }
 
-    /* Specific White Box Container Styling for Start Reflex Test Section */
+    /* Specific White Box Container Styling for Start Reflex Test Section and Dropdown Boxes */
     .start-reflex-card {
         background-color: #ffffff !important;
         border: 1px solid #cbd5e1 !important;
         border-radius: 12px;
         padding: 20px;
         margin: 15px 0;
-        color: #000000 !important;
+        color: #1e293b !important;
         box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
     .start-reflex-card *, .start-reflex-card strong, .start-reflex-card span, .start-reflex-card p {
-        color: #000000 !important;
+        color: #1e293b !important;
     }
     </style>
     """,
@@ -611,18 +632,18 @@ elif selected_tab == "Cognitive Games":
             # Display flashing high-contrast colored box with bright white text inside
             if target == 'RED':
                 st.markdown(
-                    f'<div class="reflex-box-red">TARGET SIGNAL: RED<br><span style="font-size: 1rem; font-weight: normal;">(Do NOT click! Wait or click Red button if penalizing)</span></div>',
+                    f'<div class="reflex-box-red">TARGET SIGNAL: RED<br><span style="font-size: 1rem; font-weight: normal; color: #ffffff !important;">(Do NOT click! Wait or click Red button if penalizing)</span></div>',
                     unsafe_allow_html=True
                 )
             else:
                 st.markdown(
-                    f'<div class="reflex-box-green">TARGET SIGNAL: GREEN<br><span style="font-size: 1rem; font-weight: normal;">(Click Green immediately to calculate ms reaction time!)</span></div>',
+                    f'<div class="reflex-box-green">TARGET SIGNAL: GREEN<br><span style="font-size: 1rem; font-weight: normal; color: #ffffff !important;">(Click Green immediately to calculate ms reaction time!)</span></div>',
                     unsafe_allow_html=True
                 )
             
             c1, c2 = st.columns(2)
             with c1:
-                if st.button("🔴 Click RED", key="click_red"):
+                if st.button("Click RED", key="click_red"):
                     reaction_time_ms = (time.time() - st.session_state.reflex_start_time) * 1000.0
                     if target == 'RED':
                         st.session_state.reflex_score += 1
@@ -631,7 +652,7 @@ elif selected_tab == "Cognitive Games":
                         st.error(f"Incorrect! That was a Green target. Reaction time was {reaction_time_ms:.1f} ms")
                     st.session_state.reflex_state = 'IDLE'
             with c2:
-                if st.button("🟢 Click GREEN", key="click_green"):
+                if st.button("Click GREEN", key="click_green"):
                     reaction_time_ms = (time.time() - st.session_state.reflex_start_time) * 1000.0
                     if target == 'GREEN':
                         st.session_state.reflex_score += 1
