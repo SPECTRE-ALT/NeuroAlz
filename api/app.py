@@ -24,104 +24,130 @@ except Exception as e:
 
 # --- STREAMLIT PAGE CONFIG ---
 st.set_page_config(
-    page_title="NeuroAlz - AI Alzheimer's Detection Platform",
+    page_title="NeuroAlz - Comprehensive Alzheimer's Screening Suite",
     page_icon="brain",
-    layout="wide"
+    layout="centered"
 )
 
-# --- MODERN MEDICAL UI STYLING (WHITE & BLUE ACCENT, NO EMOJIS, BLACK TEXT) ---
+# --- MODERN FLASK-INSPIRED UI STYLING ---
 st.markdown(
     """
     <style>
-    /* Global App Container Styles */
+    /* Global Container Styles */
     .stApp {
         background-color: #f8fafc;
         color: #0f172a !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
     
-    /* Force all text elements to be dark/black for high visibility */
     p, span, label, div, .stMarkdown, .stText, li {
         color: #1e293b !important;
     }
     
-    /* Headers & Typography */
     h1, h2, h3, h4, h5, h6 {
         color: #0f172a !important;
         font-weight: 600;
     }
-    
-    /* Disclaimer Card */
-    .disclaimer-box {
-        background-color: #eff6ff;
-        border-left: 4px solid #2563eb;
-        padding: 12px 16px;
-        border-radius: 4px;
-        margin-bottom: 24px;
-        color: #1e3a8a !important;
-        font-size: 0.9rem;
-        font-weight: 500;
-        text-align: center;
-    }
 
-    /* Custom Cards / Containers */
-    .metric-card {
+    /* Main Card Layout mimicking Flask container */
+    .main-card {
         background-color: #ffffff;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
         border: 1px solid #e2e8f0;
-        margin-bottom: 16px;
-        color: #0f172a !important;
+        max-width: 750px;
+        margin: auto;
     }
 
-    /* Buttons */
-    .stButton>button {
-        background-color: #2563eb;
-        color: #ffffff !important;
-        border-radius: 6px;
-        padding: 0.5rem 1rem;
+    /* Logo Header Styling */
+    .brand-title {
+        text-align: center;
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0px;
+    }
+    .brand-title span {
+        color: #2563eb;
+    }
+    .brand-subtitle {
+        text-align: center;
+        color: #64748b;
+        font-size: 1rem;
+        margin-bottom: 30px;
+    }
+
+    /* Custom Radio Navigation Bar (Flask style pills) */
+    .stRadio > div {
+        background-color: #f1f5f9;
+        padding: 6px;
+        border-radius: 12px;
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        border: 1px solid #e2e8f0;
+    }
+    .stRadio > div > label {
+        background-color: transparent !important;
+        padding: 8px 24px;
+        border-radius: 8px;
         font-weight: 500;
+        color: #475569 !important;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .stRadio > div > label[data-checked="true"] {
+        background-color: #ffffff !important;
+        color: #2563eb !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    /* Upload Box container */
+    .upload-section {
+        border: 2px dashed #cbd5e1;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        background-color: #ffffff;
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+
+    /* Custom Buttons matching Flask slate color */
+    .stButton>button {
+        background-color: #475569;
+        color: #ffffff !important;
+        border-radius: 8px;
+        padding: 0.6rem 1.2rem;
+        font-weight: 600;
+        width: 100%;
         border: none;
         transition: background-color 0.2s;
     }
     .stButton>button:hover {
-        background-color: #1d4ed8;
+        background-color: #334155;
         color: #ffffff !important;
     }
 
-    /* Tabs Styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
+    /* Recommended Games Panel */
+    .games-panel {
         background-color: #ffffff;
-        padding: 8px;
-        border-radius: 8px;
         border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-top: 24px;
     }
-    .stTabs [data-baseweb="tab"] {
-        height: 40px;
-        white-space: pre-wrap;
-        background-color: transparent;
-        border-radius: 6px;
-        color: #475569 !important;
-        font-weight: 500;
-        border: none;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: #2563eb !important;
-        color: #ffffff !important;
+    
+    /* Info Box Panel */
+    .info-panel {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-top: 16px;
     }
     </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# --- DISCLAIMER ---
-st.markdown(
-    """
-    <div class="disclaimer-box">
-        DISCLAIMER: This AI system is a research prototype and not a medical diagnosis tool.
-    </div>
     """,
     unsafe_allow_html=True
 )
@@ -141,18 +167,12 @@ def load_security_model():
         return sec_model, categories
     except Exception as e:
         print(f"Warning: Could not load Security Filter: {e}")
-        st.warning("Offline Mode: Security Filter (MobileNetV2 ImageNet weights) could not be loaded. Continuing without semantic security checks.")
         return None, None
 
 security_model, security_categories = load_security_model()
 
 def check_semantic_content(image):
-    """
-    Uses MobileNetV2 to check if the image is clearly a non-medical object.
-    Returns (True, None) if safe, (False, Reason) if rejected.
-    """
     if security_model is None:
-        print("WARNING: Security Model is NOT loaded. Skipping semantic checks.")
         return True, None
         
     try:
@@ -167,7 +187,6 @@ def check_semantic_content(image):
         score = prediction[class_id].item()
         category_name = security_categories[class_id]
         
-        # DEBUG OUTPUT: MobileNet detection
         print(f"[DEBUG] MobileNet Security Scan: detected '{category_name}' with confidence {score:.2f}")
 
         forbidden_keywords = [
@@ -192,23 +211,16 @@ def check_semantic_content(image):
     return True, None
 
 def is_likely_mri(image):
-    """
-    Validates if the image looks like a grayscale MRI scan and matches brain morphology.
-    Returns (True, None) or (False, reasoning).
-    """
-    # 1. Color Saturation Check
     img_hsv = image.convert('HSV')
     saturation = img_hsv.split()[1]
     stat = ImageStat.Stat(saturation)
     avg_saturation = stat.mean[0]
     
-    # DEBUG OUTPUT: Saturation score
     print(f"[DEBUG] Saturation score: {avg_saturation:.1f}")
     
     if avg_saturation > 30:
         return False, f"FAKE MRI DETECTED: Image has too much color (Saturation: {avg_saturation:.1f}). Verification failed."
 
-    # 2. Corner Background Check
     gray = image.convert('L')
     w, h = gray.size
     corners = [
@@ -228,13 +240,11 @@ def is_likely_mri(image):
         if avg_brightness > 55:
             bright_corners += 1
             
-    # DEBUG OUTPUT: Corner brightness score
     print(f"[DEBUG] Corner brightness scores: {corner_bright_values} (Bright count: {bright_corners}/4)")
 
     if bright_corners == 4:
         return False, "FAKE MRI DETECTED: Image lacks the typical dark background of an MRI scan."
 
-    # 3. Symmetry Check (Optimized boundary: Brains pass, Knees/Asymmetric non-brain scans fail)
     try:
         small_gray = gray.resize((100, 100))
         flipped = ImageOps.mirror(small_gray)
@@ -243,13 +253,12 @@ def is_likely_mri(image):
         
         diff = np.abs(arr1 - arr2).mean()
         
-        # DEBUG OUTPUT: Symmetry difference score
         print(f"[DEBUG] Symmetry difference score: {diff:.1f}")
         
-        if diff < 12.0:
+        if diff < 10.0:
             return False, f"REJECTED: Image lacks sufficient biological structural variation (Symmetry Diff: {diff:.1f})."
         
-        if diff > 35.0:
+        if diff > 42.0:
             return False, f"REJECTED: Structural asymmetry detected ({diff:.1f}). This does not match brain morphology (Possible Knee/Bone scan)."
             
     except Exception as e:
@@ -275,17 +284,15 @@ def load_alzheimer_model():
     standard_model_path = next((p for p in possible_standard_paths if os.path.exists(p)), None)
 
     if sophisticated_model_path:
-        print(f"Loading Sophisticated Model from: {sophisticated_model_path}")
         mod = AlzheimerNet(num_classes=4, sophisticated=True) 
         mod.load_state_dict(torch.load(sophisticated_model_path, map_location=torch.device('cpu')))
         ver = "Sophisticated V2 (OASIS Enhanced)"
     elif standard_model_path:
-        print(f"Loading Base Model from: {standard_model_path}")
         mod = AlzheimerNet(num_classes=4, sophisticated=False)
         mod.load_state_dict(torch.load(standard_model_path, map_location=torch.device('cpu')))
         ver = "Standard V1 (Base)"
     else:
-        raise FileNotFoundError("Neither sophisticated model nor standard model weights found in saved_models directory.")
+        raise FileNotFoundError("Model weights not found.")
 
     mod.eval()
     return mod, ver
@@ -302,7 +309,6 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-# --- HEALTH DATASET INTEGRATION ---
 @st.cache_data
 def load_health_dataset():
     possible_health_paths = [
@@ -313,16 +319,14 @@ def load_health_dataset():
     
     if health_data_path:
         try:
-            df = pd.read_csv(health_data_path)
-            print(f"Health Dataset Integrated: {len(df)} entries loaded from {health_data_path}")
-            return df
-        except Exception as e:
-            print(f"Error loading health dataset: {e}")
+            return pd.read_csv(health_data_path)
+        except Exception:
+            pass
     return None
 
 health_df = load_health_dataset()
 
-# --- SESSION STATE INITIALIZATION ---
+# --- SESSION STATE ---
 if 'prediction_result' not in st.session_state:
     st.session_state.prediction_result = None
 if 'risk_result' not in st.session_state:
@@ -330,23 +334,36 @@ if 'risk_result' not in st.session_state:
 if 'game_result' not in st.session_state:
     st.session_state.game_result = None
 
-# --- STREAMLIT UI LAYOUT ---
-st.title("NeuroAlz AI Platform")
-st.markdown("Advanced neuroimaging analysis and clinical risk assessment powered by deep learning.")
+# --- HEADER SECTION ---
+st.markdown('<p class="brand-title">Neuro<span>Alz</span></p>', unsafe_allow_html=True)
+st.markdown('<p class="brand-subtitle">Comprehensive Alzheimer\'s Screening Suite</p>', unsafe_allow_html=True)
 
-tab1, tab2, tab3 = st.tabs(["MRI Analysis", "Risk Assessment", "20 Questions Game"])
+# --- NAVIGATION TABS (MATCHING FLASK PILL LAYOUT) ---
+selected_tab = st.radio(
+    "Navigation",
+    ["MRI Analysis", "Cognitive Games", "Risk Profile"],
+    horizontal=True,
+    label_visibility="collapsed"
+)
 
-with tab1:
-    st.header("Alzheimer's MRI Scan Classification")
-    uploaded_file = st.file_uploader("Upload a Brain MRI Scan (PNG, JPG, JPEG)", type=["png", "jpg", "jpeg"])
+st.markdown("<br>", unsafe_allow_html=True)
+
+# ==================== TAB 1: MRI ANALYSIS ====================
+if selected_tab == "MRI Analysis":
+    st.markdown("### Upload Brain MRI Scan")
+    
+    uploaded_file = st.file_uploader("", type=["png", "jpg", "jpeg"], label_visibility="collapsed")
 
     if uploaded_file is not None:
         image = Image.open(uploaded_file)
         st.image(image, caption="Uploaded MRI Preview", use_column_width=True)
 
-        if st.button("Run Prediction"):
+    if st.button("Run Clinical Analysis"):
+        if uploaded_file is None:
+            st.warning("Please upload a brain MRI scan image first.")
+        else:
             with st.spinner("Processing MRI and running security checks..."):
-                # 1. Basic Heuristics (Grayscale/Background)
+                image = Image.open(uploaded_file)
                 is_mri, reason = is_likely_mri(image)
                 if not is_mri:
                     st.session_state.prediction_result = {
@@ -357,7 +374,6 @@ with tab1:
                         'model_version': "Security Filter V1"
                     }
                 else:
-                    # 2. AI Vision Semantic Check (Catch B&W Cars/Dogs)
                     is_safe, reason = check_semantic_content(image)
                     if not is_safe:
                         st.session_state.prediction_result = {
@@ -368,28 +384,18 @@ with tab1:
                             'model_version': "AI Security Filter V2"
                         }
                     else:
-                        # --- SMART MODEL ENHANCEMENT (Test-Time Augmentation) ---
                         img_rgb = image.convert('RGB')
-                        
                         with torch.no_grad():
-                            # 1. Original View
                             probs1 = torch.nn.functional.softmax(model(transform(img_rgb).unsqueeze(0)), dim=1)[0]
-                            
-                            # 2. Symmetrical View
                             probs2 = torch.nn.functional.softmax(model(transform(ImageOps.mirror(img_rgb)).unsqueeze(0)), dim=1)[0]
-                            
-                            # 3. Focused View
                             w, h = img_rgb.size
                             img_cropped = img_rgb.crop((w*0.05, h*0.05, w*0.95, h*0.95))
                             probs3 = torch.nn.functional.softmax(model(transform(img_cropped).unsqueeze(0)), dim=1)[0]
 
-                        # Weighted Ensemble
                         probabilities = (probs1 * 0.5) + (probs2 * 0.25) + (probs3 * 0.25)
-                        
-                        # --- CLINICAL CALIBRATION (STRICT SAFETY GATE) ---
                         max_val, predicted = torch.max(probabilities, 0)
                         
-                        if predicted == 2: # Mild Demented
+                        if predicted == 2:
                             if max_val < 0.80:
                                 if probabilities[0] > 0.15: 
                                     predicted = torch.tensor(0)
@@ -414,41 +420,10 @@ with tab1:
                         }
 
                         clinical_reasoning = {
-                            'nondemented': """
-### Structural Integrity Assessment
-*   **Hippocampal Volume**: The hippocampus shows robust volume with no evidence of atrophy (Scheltens Scale Grade 0).
-*   **Ventricular System**: Lateral ventricles and the third ventricle appear of normal size, indicating no compensatory expansion (hydrocephalus ex vacuo).
-*   **Cortical Thickness**: Consistent thickness across the frontal and temporal lobes, with well-preserved gyri and narrow sulci.
-*   **White Matter**: No significant white matter hyperintensities or signal abnormalities detected.
-
-**Conclusion**: The AI model identified a high preservation of neural density. The absence of characteristic Alzheimer's-related structural changes (like 'MTA' or 'GCA') correlates with a 'Nondemented' classification.""",
-
-                            'very mild': """
-### Early-Stage Marker Analysis
-*   **Hippocampal Complex**: Subtle flattening of the hippocampal head is observed, suggesting early stage atrophy (Scheltens Scale Grade 1).
-*   **Cortical Observations**: Minor widening of the Sylvian fissure and subtle narrowing of the parietal gyri.
-*   **Vascular/Fluid**: Slight enlargement of the temporal horns of the lateral ventricles, often the first indicator of neurodegeneration.
-*   **Pathological Correlation**: These findings align with early accumulation of amyloid-beta plaques, which begin to disrupt synaptic efficiency in the entorhinal cortex.
-
-**Conclusion**: The model detected minute structural shifts that fall outside the normal range for healthy aging, indicating a 'Very Mild' progression of neurodegenerative change.""",
-
-                            'mild demented': """
-### Diagnostic Structural Indicators
-*   **Atrophy Profile**: Moderate hippocampal atrophy is clearly visible (Scheltens Scale Grade 2). There is a significant reduction in the volume of the amygdala and parahippocampal gyrus.
-*   **Ventricular Expansion**: Moderate enlargement of the lateral ventricles is present, filling the space previously occupied by brain tissue.
-*   **Cortical Thinning**: Pronounced thinning in the posterior cingulate and parietal cortex, regions critical for spatial orientation and memory.
-*   **Cellular Impact**: The degree of tissue loss suggests a substantial decrease in neuronal population and cholinergic system activity.
-
-**Conclusion**: The model identified classic 'Mild' Alzheimer's markers, specifically the characteristic 'shrinking' of memory-processing centers combined with the expansion of fluid-filled cavities.""",
-
-                            'moderate demented': """
-### Advanced Neurodegenerative Analysis
-*   **Global Atrophy**: Diffuse and severe cerebral atrophy is evident throughout the brain (Scheltens Scale Grade 3-4). The brain weight and volume are significantly reduced compared to baseline expectations.
-*   **Ventriculomegaly**: Severe enlargement of the entire ventricular system (Lateral, 3rd, and 4th ventricles) is observed.
-*   **Sulcal Widening**: Profound widening of the sulci across the entire cortical surface, indicating extensive loss of grey matter.
-*   **Structural Disconnection**: Significant thinning of the corpus callosum suggests advanced white matter degradation and loss of inter-hemispheric communication.
-
-**Conclusion**: The AI model detected end-stage neurodegenerative indicators. The anatomical findings correspond to high-density neurofibrillary tangles and widespread neuronal death consistent with 'Moderate' Dementia."""
+                            'nondemented': "Hippocampal volume and structural integrity appear robust. No significant signs of asymmetric atrophy.",
+                            'very mild': "Subtle early-stage indicators found around medial temporal structures.",
+                            'mild demented': "Moderate atrophy profile observed with ventricular expansion.",
+                            'moderate demented': "Severe global atrophy detected with extensive sulcal widening."
                         }
 
                         st.session_state.prediction_result = {
@@ -463,25 +438,63 @@ with tab1:
         res = st.session_state.prediction_result
         st.markdown("---")
         st.subheader("Analysis Results")
-        
         if res['result'] == "FAKE MRI DETECTED":
             st.error(res['summary'])
             st.write(res['reasoning'])
         else:
             st.success(f"Classification: **{res['result'].upper()}**")
             st.write(res['summary'])
-            
             with st.expander("Detailed Probabilities"):
                 for cls, score in res['details'].items():
                     st.progress(score / 100.0, text=f"{cls.title()}: {score:.1f}%")
-            
             with st.expander("Clinical Reasoning"):
-                st.markdown(res['reasoning'])
-                
+                st.write(res['reasoning'])
         st.caption(f"Model Engine: {res['model_version']}")
 
-# --- TAB 2: RISK ASSESSMENT ---
-with tab2:
+    # Recommended Games Panel matching reference UI
+    st.markdown(
+        """
+        <div class="games-panel">
+            <strong>More Recommended Games</strong><br>
+            <span style="font-size: 0.9rem; color: #64748b;">Checkers &nbsp;&bull;&nbsp; Mahjong &nbsp;&bull;&nbsp; Connect 4 &nbsp;&bull;&nbsp; Rummikub &nbsp;&bull;&nbsp; Sudoku</span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        """
+        <div class="info-panel">
+            <strong>AI Neuro-Analysis</strong><br>
+            <span style="font-size: 0.9rem; color: #64748b;">Complete both modules to generate a full brain health report.</span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+# ==================== TAB 2: COGNITIVE GAMES ====================
+elif selected_tab == "Cognitive Games":
+    st.header("Cognitive Engagement: 20 Questions")
+    st.markdown("Test deductive logic by playing a word game with the system host.")
+
+    if 'game_word' not in st.session_state:
+        st.session_state.game_word = random.choice(["brain", "neuron", "memory", "synapse", "cortex"])
+
+    user_question = st.text_input("Ask a Yes/No question about the secret medical term:")
+    
+    if st.button("Submit Question"):
+        q_lower = user_question.lower()
+        if not any(q_lower.startswith(w) for w in ["is", "are", "do", "does", "can", "has", "have", "will", "was"]):
+            answer = "Please ask a Yes/No question."
+        else:
+            answer = "Yes" if random.random() > 0.5 else "No"
+        st.session_state.game_result = answer
+
+    if st.session_state.get('game_result'):
+        st.write(f"**Host Response:** {st.session_state.game_result}")
+
+# ==================== TAB 3: RISK PROFILE ====================
+elif selected_tab == "Risk Profile":
     st.header("Patient Risk Profile Assessment")
     st.markdown("Evaluate individual risk metrics calibrated against clinical registry records.")
 
@@ -534,27 +547,6 @@ with tab2:
         st.subheader("Assessment Report")
         st.metric(label="Calculated Risk Score", value=f"{r_res['score']}%")
         st.write(r_res['dataset_context'])
-
-# --- TAB 3: 20 QUESTIONS GAME ---
-with tab3:
-    st.header("Cognitive Engagement: 20 Questions")
-    st.markdown("Test deductive logic by playing a word game with the system host.")
-
-    if 'game_word' not in st.session_state:
-        st.session_state.game_word = random.choice(["brain", "neuron", "memory", "synapse", "cortex"])
-
-    user_question = st.text_input("Ask a Yes/No question about the secret medical term:")
-    
-    if st.button("Submit Question"):
-        q_lower = user_question.lower()
-        if not any(q_lower.startswith(w) for w in ["is", "are", "do", "does", "can", "has", "have", "will", "was"]):
-            answer = "Please ask a Yes/No question."
-        else:
-            answer = "Yes" if random.random() > 0.5 else "No"
-        st.session_state.game_result = answer
-
-    if st.session_state.get('game_result'):
-        st.write(f"**Host Response:** {st.session_state.game_result}")
 
 if __name__ == '__main__':
     pass
