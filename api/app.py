@@ -30,11 +30,11 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- HIGH-CONTRAST MODERN UI STYLING (FIXED BLENDING/VISIBILITY ISSUES) ---
+# --- HIGH-CONTRAST MODERN UI STYLING (FIXED TEXT & BOX CONTRAST) ---
 st.markdown(
     """
     <style>
-    /* Global Container Styles with high contrast */
+    /* Global Container Styles */
     .stApp {
         background-color: #f1f5f9;
         color: #0f172a !important;
@@ -80,7 +80,7 @@ st.markdown(
         font-weight: 500;
     }
 
-    /* Custom Radio Navigation Bar Styling for High Contrast */
+    /* Custom Radio Navigation Bar Styling */
     .stRadio > div {
         background-color: #e2e8f0;
         padding: 6px;
@@ -132,23 +132,29 @@ st.markdown(
         color: #ffffff !important;
     }
 
-    /* Panels with high-contrast text */
+    /* Dark/Black Boxes with Forced White Text */
     .games-panel {
-        background-color: #ffffff;
-        border: 1px solid #cbd5e1;
+        background-color: #0f172a !important;
+        border: 1px solid #334155 !important;
         border-radius: 12px;
         padding: 16px 20px;
         margin-top: 24px;
-        color: #0f172a !important;
+        color: #ffffff !important;
+    }
+    .games-panel *, .games-panel strong, .games-panel span {
+        color: #ffffff !important;
     }
     
     .info-panel {
-        background-color: #ffffff;
-        border: 1px solid #cbd5e1;
+        background-color: #0f172a !important;
+        border: 1px solid #334155 !important;
         border-radius: 12px;
         padding: 16px 20px;
         margin-top: 16px;
-        color: #0f172a !important;
+        color: #ffffff !important;
+    }
+    .info-panel *, .info-panel strong, .info-panel span {
+        color: #ffffff !important;
     }
     </style>
     """,
@@ -456,7 +462,7 @@ if selected_tab == "MRI Analysis":
         """
         <div class="games-panel">
             <strong>More Recommended Games</strong><br>
-            <span style="font-size: 0.9rem; color: #334155;">Checkers &nbsp;&bull;&nbsp; Mahjong &nbsp;&bull;&nbsp; Connect 4 &nbsp;&bull;&nbsp; Rummikub &nbsp;&bull;&nbsp; Sudoku</span>
+            <span>Checkers &nbsp;&bull;&nbsp; Mahjong &nbsp;&bull;&nbsp; Connect 4 &nbsp;&bull;&nbsp; Rummikub &nbsp;&bull;&nbsp; Sudoku</span>
         </div>
         """,
         unsafe_allow_html=True
@@ -466,7 +472,7 @@ if selected_tab == "MRI Analysis":
         """
         <div class="info-panel">
             <strong>AI Neuro-Analysis</strong><br>
-            <span style="font-size: 0.9rem; color: #334155;">Complete both modules to generate a full brain health report.</span>
+            <span>Complete both modules to generate a full brain health report.</span>
         </div>
         """,
         unsafe_allow_html=True
