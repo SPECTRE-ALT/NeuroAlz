@@ -30,7 +30,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- GLOBAL UI & BUTTON READABILITY CSS (PASTE EXACTLY HERE) ---
+# --- GLOBAL UI & BUTTON READABILITY CSS ---
 st.markdown(
     """
     <style>
@@ -116,7 +116,7 @@ st.markdown(
         margin-bottom: 20px;
     }
 
-    /* GLOBAL BUTTON READABILITY FIX (Option 1: Clean White Background, Dark/Black Text, Blue Border Accent) */
+    /* GLOBAL BUTTON READABILITY FIX */
     .stButton>button {
         background-color: #ffffff !important;
         color: #0f172a !important;
@@ -599,7 +599,6 @@ elif selected_tab == "Cognitive Games":
     st.header("Cognitive Engagement & Screening Modules")
     st.markdown("Select a specialized evaluation module to test neuro-cognitive responsiveness.")
 
-    # Wrapped inside a white container matching user preference for choosing screening text
     st.markdown('<div class="start-reflex-card">', unsafe_allow_html=True)
     game_sub_tab = st.selectbox(
         "Choose Screening Test", 
@@ -621,7 +620,6 @@ elif selected_tab == "Cognitive Games":
             st.session_state.reflex_score = 0
             st.session_state.reflex_rounds = 0
 
-        # Wrapped inside a white card box for "Start Reflex Test"
         st.markdown('<div class="start-reflex-card">', unsafe_allow_html=True)
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
@@ -629,7 +627,6 @@ elif selected_tab == "Cognitive Games":
         st.markdown('</div>', unsafe_allow_html=True)
         
         if start_reflex:
-            # Simulate a brief delay before flashing a random red/green signal box
             time.sleep(random.uniform(0.5, 1.5))
             st.session_state.reflex_state = 'ACTIVE'
             st.session_state.reflex_target = random.choice(['GREEN', 'RED', 'GREEN', 'GREEN', 'RED'])
@@ -639,7 +636,6 @@ elif selected_tab == "Cognitive Games":
         if st.session_state.reflex_state == 'ACTIVE':
             target = st.session_state.reflex_target
             
-            # Display flashing high-contrast colored box with bright white text inside
             if target == 'RED':
                 st.markdown(
                     f'<div class="reflex-box-red">TARGET SIGNAL: RED<br><span style="font-size: 1rem; font-weight: normal; color: #ffffff !important;">(Do NOT click! Wait or click Red button if penalizing)</span></div>',
@@ -681,35 +677,82 @@ elif selected_tab == "Cognitive Games":
     # --- MODULE 2: HIPPOCAMPAL FUNCTION ---
     elif game_sub_tab == "Hippocampal Function (Pattern Match)":
         st.subheader("Hippocampal Spatial Pattern Matching")
-        st.markdown("Observe the grid pattern below, then recreate it by selecting the matching sequence.")
+        st.markdown("Tests spatial memory, sequence recall, and hippocampal pattern recognition.")
 
-        if 'pattern_target' not in st.session_state:
-            st.session_state.pattern_target = [random.choice([0, 1]) for _ in range(4)]
-            st.session_state.pattern_stage = 'SHOW'
+        if 'reactor_state' not in st.session_state:
+            st.session_state.reactor_state = 'IDLE'
+            st.session_state.reactor_sequence = []
+            st.session_state.reactor_player_index = 0
+            st.session_state.reactor_round = 0
+            st.session_state.reactor_highlight = None
 
-        if st.session_state.pattern_stage == 'SHOW':
-            st.info(f"Memorize Pattern Sequence: **{st.session_state.pattern_target}** (1 = Active, 0 = Inactive)")
-            if st.button("I'm Ready - Input Pattern"):
-                st.session_state.pattern_stage = 'INPUT'
+        if st.session_state.reactor_state == 'IDLE':
+            st.markdown(
+                '<div class="reflex-box-waiting">Memorize the highlighted tile sequence on the 3x3 grid and repeat it back in the correct order. Each round adds a new tile to the sequence.</div>',
+                unsafe_allow_html=True
+            )
+            if st.button("Start Reactor Sequence Game", key="start_reactor_game"):
+                st.session_state.reactor_round = 1
+                st.session_state.reactor_sequence = [random.randint(0, 8)]
+                st.session_state.reactor_player_index = 0
+                st.session_state.reactor_state = 'PLAYING_SEQUENCE'
                 st.rerun()
 
-        elif st.session_state.pattern_stage == 'INPUT':
-            st.markdown("Select your matched pattern grid:")
-            p1 = st.selectbox("Tile 1", [0, 1], key="t1")
-            p2 = st.selectbox("Tile 2", [0, 1], key="t2")
-            p3 = st.selectbox("Tile 3", [0, 1], key="t3")
-            p4 = st.selectbox("Tile 4", [0, 1], key="t4")
+        elif st.session_state.reactor_state == 'PLAYING_SEQUENCE':
+            st.markdown(f"### Watch sequence... Round {st.session_state.reactor_round}")
+            
+            # Render grid with sequence playback
+            for r in range(3):
+                cols = st.columns(3)
+                for c in range(3):
+                    idx = r * 3 + c
+                    with cols[c]:
+                        is_lit = idx in st.session_state.reactor_sequence
+                        if is_lit:
+                            st.markdown(f'<div style="background-color: #2563eb; color: #ffffff; padding: 25px; text-align: center; border-radius: 8px; font-weight: bold; font-size: 1.2rem; border: 2px solid #1d4ed8;">ACTIVE</div>', unsafe_allow_html=True)
+                        else:
+                            st.markdown(f'<div style="background-color: #ffffff; color: #94a3b8; padding: 25px; text-align: center; border-radius: 8px; font-weight: bold; font-size: 1.2rem; border: 1px solid #cbd5e1;">Tile {idx+1}</div>', unsafe_allow_html=True)
 
-            if st.button("Submit Pattern"):
-                user_pattern = [p1, p2, p3, p4]
-                if user_pattern == st.session_state.pattern_target:
-                    st.success("Pattern match successful! Hippocampal recall functional.")
-                else:
-                    st.error(f"Mismatch! Correct pattern was {st.session_state.pattern_target}.")
-                if st.button("Play Again"):
-                    st.session_state.pattern_target = [random.choice([0, 1]) for _ in range(4)]
-                    st.session_state.pattern_stage = 'SHOW'
-                    st.rerun()
+            time.sleep(1.2)
+            st.session_state.reactor_state = 'WAITING_INPUT'
+            st.rerun()
+
+        elif st.session_state.reactor_state == 'WAITING_INPUT':
+            st.markdown(f"### Your Turn: Repeat Sequence (Round {st.session_state.reactor_round})")
+            st.markdown("Click the tiles in the exact order they appeared.")
+
+            for r in range(3):
+                cols = st.columns(3)
+                for c in range(3):
+                    idx = r * 3 + c
+                    with cols[c]:
+                        if st.button(f"Tile {idx+1}", key=f"reactor_tile_{idx}_{st.session_state.reactor_round}_{st.session_state.reactor_player_index}"):
+                            expected_tile = st.session_state.reactor_sequence[st.session_state.reactor_player_index]
+                            if idx == expected_tile:
+                                st.session_state.reactor_player_index += 1
+                                if st.session_state.reactor_player_index >= len(st.session_state.reactor_sequence):
+                                    st.session_state.reactor_round += 1
+                                    st.session_state.reactor_sequence.append(random.randint(0, 8))
+                                    st.session_state.reactor_player_index = 0
+                                    st.session_state.reactor_state = 'PLAYING_SEQUENCE'
+                                st.rerun()
+                            else:
+                                st.session_state.reactor_state = 'GAME_OVER'
+                                st.rerun()
+
+        elif st.session_state.reactor_state == 'GAME_OVER':
+            highest_round = max(1, st.session_state.reactor_round - 1)
+            st.error(f"Incorrect tile selected! Game Over.")
+            st.markdown(
+                f'<div class="reflex-box-waiting"><b>Final Score / Highest Round Reached:</b> {highest_round}</div>',
+                unsafe_allow_html=True
+            )
+            if st.button("Restart Reactor Game", key="restart_reactor"):
+                st.session_state.reactor_state = 'IDLE'
+                st.session_state.reactor_sequence = []
+                st.session_state.reactor_player_index = 0
+                st.session_state.reactor_round = 0
+                st.rerun()
 
     # --- MODULE 3: VERBAL MEMORY ---
     elif game_sub_tab == "Verbal Memory (Short Story Test)":
