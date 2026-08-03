@@ -166,6 +166,53 @@ st.markdown(
     .stAlert *, div[data-baseweb="notification"] * {
         color: #ffffff !important;
     }
+
+    /* Reflex Game Box Styling with Visible High-Contrast Text */
+    .reflex-box-red {
+        background-color: #b91c1c !important;
+        border: 2px solid #ef4444 !important;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        margin: 20px 0;
+        color: #ffffff !important;
+        font-size: 1.5rem;
+        font-weight: bold;
+        box-shadow: 0 4px 15px rgba(185, 28, 28, 0.4);
+    }
+    .reflex-box-red * {
+        color: #ffffff !important;
+    }
+
+    .reflex-box-green {
+        background-color: #15803d !important;
+        border: 2px solid #22c55e !important;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        margin: 20px 0;
+        color: #ffffff !important;
+        font-size: 1.5rem;
+        font-weight: bold;
+        box-shadow: 0 4px 15px rgba(21, 128, 61, 0.4);
+    }
+    .reflex-box-green * {
+        color: #ffffff !important;
+    }
+
+    .reflex-box-waiting {
+        background-color: #334155 !important;
+        border: 2px solid #475569 !important;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        margin: 20px 0;
+        color: #e2e8f0 !important;
+        font-size: 1.2rem;
+    }
+    .reflex-box-waiting * {
+        color: #e2e8f0 !important;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -517,6 +564,8 @@ elif selected_tab == "Cognitive Games":
             start_reflex = st.button("Start Reflex Test")
         
         if start_reflex:
+            # Simulate a brief delay before flashing a random red/green signal box
+            time.sleep(random.uniform(0.5, 1.5))
             st.session_state.reflex_state = 'ACTIVE'
             st.session_state.reflex_target = random.choice(['GREEN', 'RED', 'GREEN', 'GREEN', 'RED'])
             st.session_state.reflex_start_time = time.time()
@@ -524,27 +573,43 @@ elif selected_tab == "Cognitive Games":
 
         if st.session_state.reflex_state == 'ACTIVE':
             target = st.session_state.reflex_target
-            st.markdown(f"### Target Signal: **{target}**")
+            
+            # Display flashing high-contrast colored box with bright white text inside
+            if target == 'RED':
+                st.markdown(
+                    f'<div class="reflex-box-red">TARGET SIGNAL: RED<br><span style="font-size: 1rem; font-weight: normal;">(Do NOT click! Wait or click Red button if penalizing)</span></div>',
+                    unsafe_allow_html=True
+                )
+            else:
+                st.markdown(
+                    f'<div class="reflex-box-green">TARGET SIGNAL: GREEN<br><span style="font-size: 1rem; font-weight: normal;">(Click Green immediately to calculate ms reaction time!)</span></div>',
+                    unsafe_allow_html=True
+                )
             
             c1, c2 = st.columns(2)
             with c1:
                 if st.button("🔴 Click RED", key="click_red"):
-                    reaction_time = time.time() - st.session_state.reflex_start_time
+                    reaction_time_ms = (time.time() - st.session_state.reflex_start_time) * 1000.0
                     if target == 'RED':
                         st.session_state.reflex_score += 1
-                        st.success(f"Correct! Reaction Time: {reaction_time:.2f}s")
+                        st.success(f"Correct! Reaction Time: {reaction_time_ms:.1f} ms")
                     else:
-                        st.error("Incorrect! That was a Green target.")
+                        st.error(f"Incorrect! That was a Green target. Reaction time was {reaction_time_ms:.1f} ms")
                     st.session_state.reflex_state = 'IDLE'
             with c2:
                 if st.button("🟢 Click GREEN", key="click_green"):
-                    reaction_time = time.time() - st.session_state.reflex_start_time
+                    reaction_time_ms = (time.time() - st.session_state.reflex_start_time) * 1000.0
                     if target == 'GREEN':
                         st.session_state.reflex_score += 1
-                        st.success(f"Correct! Reaction Time: {reaction_time:.2f}s")
+                        st.success(f"Correct! Reaction Time: {reaction_time_ms:.1f} ms")
                     else:
-                        st.error("Incorrect! That was a Red target.")
+                        st.error(f"Incorrect! That was a Red target. Reaction time was {reaction_time_ms:.1f} ms")
                     st.session_state.reflex_state = 'IDLE'
+        else:
+            st.markdown(
+                '<div class="reflex-box-waiting">Click <b>"Start Reflex Test"</b> to begin the flashing sequence.</div>',
+                unsafe_allow_html=True
+            )
 
         st.write(f"**Current Score:** {st.session_state.reflex_score} correct responses.")
 
