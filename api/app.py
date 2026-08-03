@@ -476,6 +476,8 @@ if "reactor_game_over" not in st.session_state:
     st.session_state.reactor_game_over = False
 if "reactor_can_click" not in st.session_state:
     st.session_state.reactor_can_click = False
+if "reactor_active_flash" not in st.session_state:
+    st.session_state.reactor_active_flash = None
 
 # --- HEADER SECTION ---
 st.markdown('<p class="brand-title">Neuro<span>Alz</span></p>', unsafe_allow_html=True)
@@ -696,6 +698,8 @@ elif selected_tab == "Cognitive Games":
 
     # --- MODULE 2: HIPPOCAMPAL FUNCTION ---
     elif game_sub_tab == "Hippocampal Function (Pattern Match)":
+        # Anchor container with ID for viewport scroll preservation
+        st.markdown('<div id="hippocampal-game-section"></div>', unsafe_allow_html=True)
         st.subheader("Hippocampal Spatial Pattern Matching (Reactor Pattern)")
         st.markdown("Tests spatial memory, sequence recall, and hippocampal pattern recognition.")
 
@@ -718,6 +722,8 @@ elif selected_tab == "Cognitive Games":
             st.session_state.reactor_game_over = False
         if "reactor_can_click" not in st.session_state:
             st.session_state.reactor_can_click = False
+        if "reactor_active_flash" not in st.session_state:
+            st.session_state.reactor_active_flash = None
 
         def handle_tile_click(tile_idx):
             if st.session_state.get("reactor_showing_sequence", False) or st.session_state.get("reactor_game_over", False):
@@ -736,7 +742,6 @@ elif selected_tab == "Cognitive Games":
                         st.session_state.reactor_best_score = current_score
                     
                     next_tile = random.randint(1, 9)
-                    # Try to avoid immediate repetition if possible by chance
                     if len(seq) > 0 and next_tile == seq[-1]:
                         next_tile = random.randint(1, 9)
                         
@@ -762,6 +767,7 @@ elif selected_tab == "Cognitive Games":
                 st.session_state.reactor_game_over = False
                 st.session_state.reactor_showing_sequence = True
                 st.session_state.reactor_state = 'PLAYING'
+                st.session_state.reactor_active_flash = None
                 st.rerun()
 
         elif current_state == 'PLAYING':
@@ -769,40 +775,34 @@ elif selected_tab == "Cognitive Games":
             seq_len = len(st.session_state.get("reactor_sequence", []))
             st.markdown(f"**Score:** {score_val} &nbsp;&bull;&nbsp; **Sequence Length:** {seq_len}")
 
+            # Handle sequence animation playback seamlessly on the single permanent grid container
             if st.session_state.get("reactor_showing_sequence", False):
                 st.info("Watch the sequence playback...")
                 
-                # Render grid placeholder
-                for r in range(3):
-                    cols = st.columns(3)
-                    for c in range(3):
-                        tile_num = r * 3 + c + 1
-                        with cols[c]:
-                            st.markdown(f'<div style="background-color: #ffffff; color: #1e293b !important; padding: 30px; text-align: center; border-radius: 12px; font-weight: bold; font-size: 1.1rem; border: 1px solid #cbd5e1;">Tile {tile_num}</div>', unsafe_allow_html=True)
+                # Render single permanent 3x3 grid container
+                grid_placeholder = st.empty()
+                
+                def render_grid(active_idx=None):
+                    with grid_placeholder.container():
+                        for r in range(3):
+                            cols = st.columns(3)
+                            for c in range(3):
+                                tile_num = r * 3 + c + 1
+                                with cols[c]:
+                                    if tile_num == active_idx:
+                                        st.markdown(f'<div style="background-color: #2563eb; color: #ffffff !important; padding: 30px; text-align: center; border-radius: 12px; font-weight: bold; font-size: 1.1rem; border: 2px solid #1d4ed8; box-shadow: 0 0 20px rgba(37, 99, 235, 0.7);">Tile {tile_num}</div>', unsafe_allow_html=True)
+                                    else:
+                                        st.markdown(f'<div style="background-color: #ffffff; color: #1e293b !important; padding: 30px; text-align: center; border-radius: 12px; font-weight: bold; font-size: 1.1rem; border: 1px solid #cbd5e1;">Tile {tile_num}</div>', unsafe_allow_html=True)
 
-                # Play sequence visually using time.sleep without page jumping or re-triggering issues
+                # Initial pause before playback
+                render_grid(None)
                 time.sleep(0.5)
+                
                 seq_to_show = st.session_state.get("reactor_sequence", [])
                 for idx in seq_to_show:
-                    # Flash active tile
-                    for r in range(3):
-                        cols = st.columns(3)
-                        for c in range(3):
-                            tile_num = r * 3 + c + 1
-                            with cols[c]:
-                                if tile_num == idx:
-                                    st.markdown(f'<div style="background-color: #2563eb; color: #ffffff !important; padding: 30px; text-align: center; border-radius: 12px; font-weight: bold; font-size: 1.1rem; border: 2px solid #1d4ed8; box-shadow: 0 0 20px rgba(37, 99, 235, 0.7);">Tile {tile_num}</div>', unsafe_allow_html=True)
-                                else:
-                                    st.markdown(f'<div style="background-color: #ffffff; color: #1e293b !important; padding: 30px; text-align: center; border-radius: 12px; font-weight: bold; font-size: 1.1rem; border: 1px solid #cbd5e1;">Tile {tile_num}</div>', unsafe_allow_html=True)
+                    render_grid(idx)
                     time.sleep(0.6)
-                    
-                    # Return grid to normal state between flashes
-                    for r in range(3):
-                        cols = st.columns(3)
-                        for c in range(3):
-                            tile_num = r * 3 + c + 1
-                            with cols[c]:
-                                st.markdown(f'<div style="background-color: #ffffff; color: #1e293b !important; padding: 30px; text-align: center; border-radius: 12px; font-weight: bold; font-size: 1.1rem; border: 1px solid #cbd5e1;">Tile {tile_num}</div>', unsafe_allow_html=True)
+                    render_grid(None)
                     time.sleep(0.25)
 
                 st.session_state.reactor_showing_sequence = False
@@ -811,7 +811,7 @@ elif selected_tab == "Cognitive Games":
             else:
                 st.success("Your Turn: Click the tiles in the correct sequence.")
                 
-                # Render interactive grid for player input
+                # Single permanent interactive 3x3 grid for player input
                 for r in range(3):
                     cols = st.columns(3)
                     for c in range(3):
@@ -842,7 +842,22 @@ elif selected_tab == "Cognitive Games":
                 st.session_state.reactor_score = 0
                 st.session_state.reactor_showing_sequence = False
                 st.session_state.reactor_game_over = False
+                st.session_state.reactor_active_flash = None
                 st.rerun()
+
+        # Viewport Scroll Anchor / Position Preservation Script
+        st.markdown(
+            """
+            <script>
+            // Ensure viewport stays locked or returns smoothly to the hippocampal section anchor on interactions
+            const hippocampalAnchor = document.getElementById("hippocampal-game-section");
+            if (hippocampalAnchor) {
+                hippocampalAnchor.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            </script>
+            """,
+            unsafe_allow_html=True
+        )
 
     # --- MODULE 3: VERBAL MEMORY ---
     elif game_sub_tab == "Verbal Memory (Short Story Test)":
