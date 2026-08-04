@@ -7,6 +7,7 @@ import time
 import numpy as np
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 import torch
 from torchvision import transforms
 from PIL import Image, ImageOps, ImageStat, ImageEnhance
@@ -30,18 +31,17 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- GLOBAL UI & VIEWPORT STABILIZATION CSS ---
+# --- GLOBAL UI CSS (No scroll hacks, pure layout stabilization) ---
 st.markdown(
     """
     <style>
-    /* Global Container Styles & Viewport Stabilization */
     .stApp {
         background-color: #f1f5f9;
         color: #0f172a !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
     
-    p, span, label, div, .stMarkdown, .stText, li, .stRadio label, .stSelectbox label {
+    p, span, label, div, .stMarkdown, .stText, li {
         color: #1e293b !important;
     }
     
@@ -50,18 +50,6 @@ st.markdown(
         font-weight: 700;
     }
 
-    /* Card layout */
-    .main-card {
-        background-color: #ffffff;
-        padding: 40px;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        border: 1px solid #cbd5e1;
-        max-width: 750px;
-        margin: auto;
-    }
-
-    /* Logo Header Styling */
     .brand-title {
         text-align: center;
         font-size: 2.2rem;
@@ -80,7 +68,6 @@ st.markdown(
         font-weight: 500;
     }
 
-    /* Custom Radio Navigation Bar Styling */
     .stRadio > div {
         background-color: #e2e8f0;
         padding: 6px;
@@ -105,18 +92,6 @@ st.markdown(
         box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
 
-    /* Upload Box container */
-    .upload-section {
-        border: 2px dashed #94a3b8;
-        border-radius: 12px;
-        padding: 30px;
-        text-align: center;
-        background-color: #ffffff;
-        margin-top: 20px;
-        margin-bottom: 20px;
-    }
-
-    /* GLOBAL BUTTON READABILITY FIX */
     .stButton>button {
         background-color: #ffffff !important;
         color: #0f172a !important;
@@ -133,62 +108,8 @@ st.markdown(
         color: #1d4ed8 !important;
         border-color: #1d4ed8 !important;
     }
-    .stButton>button:focus {
-        color: #1d4ed8 !important;
-        border-color: #2563eb !important;
-        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
-    }
-    .stButton>button * {
-        color: inherit !important;
-    }
 
-    /* Selectbox and Dropdown Container Fixes for Readability */
-    div[data-baseweb="select"] {
-        background-color: #ffffff !important;
-    }
-    div[data-baseweb="select"] > div {
-        background-color: #ffffff !important;
-        border: 1px solid #cbd5e1 !important;
-        color: #1e293b !important;
-        border-radius: 8px;
-    }
-    div[data-baseweb="select"] span, 
-    div[data-baseweb="select"] div,
-    div[data-baseweb="select"] * {
-        color: #1e293b !important;
-    }
-    
-    /* Popover/Dropdown menu list items fix */
-    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[data-baseweb="menu"] {
-        background-color: #ffffff !important;
-    }
-    div[data-baseweb="popover"] *, div[data-baseweb="menu"] *, ul[data-baseweb="menu"] * {
-        color: #1e293b !important;
-    }
-    li[role="option"] {
-        background-color: #ffffff !important;
-        color: #1e293b !important;
-    }
-    li[role="option"]:hover {
-        background-color: #f1f5f9 !important;
-        color: #1d4ed8 !important;
-    }
-
-    /* Inverted Boxes: White Background with Forced Dark Text */
-    .games-panel {
-        background-color: #ffffff !important;
-        border: 1px solid #cbd5e1 !important;
-        border-radius: 12px;
-        padding: 16px 20px;
-        margin-top: 24px;
-        color: #1e293b !important;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-    .games-panel *, .games-panel strong, .games-panel span {
-        color: #1e293b !important;
-    }
-    
-    .info-panel {
+    .games-panel, .info-panel, .start-reflex-card, .stAlert {
         background-color: #ffffff !important;
         border: 1px solid #cbd5e1 !important;
         border-radius: 12px;
@@ -197,132 +118,10 @@ st.markdown(
         color: #1e293b !important;
         box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
-    .info-panel *, .info-panel strong, .info-panel span {
+    .games-panel *, .info-panel *, .start-reflex-card *, .stAlert * {
         color: #1e293b !important;
-    }
-
-    /* Fix Streamlit info, success, warning, error boxes to use White Background and Dark Text */
-    .stAlert, div[data-baseweb="notification"] {
-        background-color: #ffffff !important;
-        color: #1e293b !important;
-        border: 1px solid #cbd5e1 !important;
-    }
-    .stAlert *, div[data-baseweb="notification"] * {
-        color: #1e293b !important;
-    }
-
-    /* Professional Reaction Test Box Styling (700px wide x 350px tall) */
-    .reaction-panel-red button {
-        background-color: #dc2626 !important;
-        border: 2px solid #ef4444 !important;
-        border-radius: 16px !important;
-        height: 350px !important;
-        max-width: 700px !important;
-        width: 100% !important;
-        color: #ffffff !important;
-        font-size: 2.5rem !important;
-        font-weight: 800 !important;
-        box-shadow: 0 8px 25px rgba(220, 38, 38, 0.35) !important;
-        cursor: pointer !important;
-        letter-spacing: 2px;
-    }
-    .reaction-panel-red button:hover {
-        background-color: #b91c1c !important;
-        border-color: #f87171 !important;
-    }
-    .reaction-panel-red button * {
-        color: #ffffff !important;
-    }
-
-    .reaction-panel-green button {
-        background-color: #16a34a !important;
-        border: 2px solid #22c55e !important;
-        border-radius: 16px !important;
-        height: 350px !important;
-        max-width: 700px !important;
-        width: 100% !important;
-        color: #ffffff !important;
-        font-size: 3rem !important;
-        font-weight: 900 !important;
-        box-shadow: 0 8px 25px rgba(22, 163, 74, 0.4) !important;
-        cursor: pointer !important;
-        letter-spacing: 3px;
-    }
-    .reaction-panel-green button:hover {
-        background-color: #15803d !important;
-        border-color: #4ade80 !important;
-    }
-    .reaction-panel-green button * {
-        color: #ffffff !important;
-    }
-
-    .reaction-box-waiting {
-        background-color: #ffffff !important;
-        border: 2px solid #cbd5e1 !important;
-        border-radius: 12px;
-        padding: 40px 20px;
-        text-align: center;
-        margin: 20px 0;
-        color: #1e293b !important;
-        font-size: 1.2rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-    .reaction-box-waiting * {
-        color: #1e293b !important;
-    }
-
-    /* Specific White Box Container Styling for Start Reflex Test Section and Dropdown Boxes */
-    .start-reflex-card {
-        background-color: #ffffff !important;
-        border: 1px solid #cbd5e1 !important;
-        border-radius: 12px;
-        padding: 20px;
-        margin: 15px 0;
-        color: #1e293b !important;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-    .start-reflex-card *, .start-reflex-card strong, .start-reflex-card span, .start-reflex-card p {
-        color: #1e293b !important;
-    }
-    
-    /* Skeld Reactor Memory Grid Styles */
-    .skeld-grid-container {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-        max-width: 420px;
-        margin: 20px auto;
     }
     </style>
-    
-    <!-- Global Viewport & Scroll Position Persistence Script -->
-    <script>
-    (function() {
-        // Save scroll position before any DOM update/rerun
-        window.addEventListener('beforeunload', function() {
-            sessionStorage.setItem('scrollpos', window.scrollY);
-        });
-        
-        // Restore scroll position instantly after DOM loads or Streamlit script runs
-        document.addEventListener('DOMContentLoaded', function() {
-            if (sessionStorage.getItem('scrollpos') !== null) {
-                window.scrollTo(0, parseInt(sessionStorage.getItem('scrollpos')));
-            }
-        });
-        
-        // Continuous Mutation Observer to prevent automatic top-jumping during Streamlit reruns
-        const observer = new MutationObserver(function() {
-            const savedPos = sessionStorage.getItem('scrollpos');
-            if (savedPos !== null && Math.abs(window.scrollY - parseInt(savedPos)) > 50) {
-                window.scrollTo(0, parseInt(savedPos));
-            }
-        });
-        
-        window.addEventListener('scroll', function() {
-            sessionStorage.setItem('scrollpos', window.scrollY);
-        });
-    })();
-    </script>
     """,
     unsafe_allow_html=True
 )
@@ -338,7 +137,6 @@ def load_security_model():
         sec_model = mobilenet_v2(weights=weights)
         sec_model.eval()
         categories = weights.meta["categories"]
-        print("Security Filter Loaded Successfully.")
         return sec_model, categories
     except Exception as e:
         print(f"Warning: Could not load Security Filter: {e}")
@@ -349,20 +147,15 @@ security_model, security_categories = load_security_model()
 def check_semantic_content(image):
     if security_model is None:
         return True, None
-        
     try:
         preprocess = MobileNet_V2_Weights.IMAGENET1K_V1.transforms()
         img_rgb = image.convert('RGB')
         batch = preprocess(img_rgb).unsqueeze(0)
-        
         with torch.inference_mode():
             prediction = security_model(batch).squeeze(0).softmax(0)
-            
         class_id = prediction.argmax().item()
         score = prediction[class_id].item()
         category_name = security_categories[class_id]
-        
-        print(f"[DEBUG] MobileNet Security Scan: detected '{category_name}' with confidence {score:.2f}")
 
         forbidden_keywords = [
             'car', 'wagon', 'vehicle', 'truck', 'racer', 'wheel', 'convertible', 'jeep', 'cab',
@@ -373,16 +166,12 @@ def check_semantic_content(image):
             'fish', 'shark', 'whale', 'shoe', 'sock', 'clothing',
             'knee', 'joint', 'elbow', 'hand', 'foot', 'bone', 'leg'
         ]
-        
         is_forbidden = any(keyword in category_name.lower() for keyword in forbidden_keywords)
-        
         if is_forbidden and score > 0.12: 
              return False, f"Content detected as '{category_name}' ({score*100:.1f}% confidence). This does not look like an MRI."
-             
     except Exception as e:
         print(f"Security Scan Error: {e}")
         return True, None
-        
     return True, None
 
 def is_likely_mri(image):
@@ -390,52 +179,24 @@ def is_likely_mri(image):
     saturation = img_hsv.split()[1]
     stat = ImageStat.Stat(saturation)
     avg_saturation = stat.mean[0]
-    
-    print(f"[DEBUG] Saturation score: {avg_saturation:.1f}")
-    
     if avg_saturation > 30:
         return False, f"FAKE MRI DETECTED: Image has too much color (Saturation: {avg_saturation:.1f}). Verification failed."
 
     gray = image.convert('L')
     w, h = gray.size
-    corners = [
-        (0, 0, 20, 20),          
-        (w-20, 0, w, 20),         
-        (0, h-20, 20, h),         
-        (w-20, h-20, w, h)        
-    ]
-    
-    bright_corners = 0
-    corner_bright_values = []
-    for box in corners:
-        region = gray.crop(box)
-        stat = ImageStat.Stat(region)
-        avg_brightness = stat.mean[0]
-        corner_bright_values.append(avg_brightness)
-        if avg_brightness > 55:
-            bright_corners += 1
-            
-    print(f"[DEBUG] Corner brightness scores: {corner_bright_values} (Bright count: {bright_corners}/4)")
-
+    corners = [(0, 0, 20, 20), (w-20, 0, w, 20), (0, h-20, 20, h), (w-20, h-20, w, h)]
+    bright_corners = sum(1 for box in corners if ImageStat.Stat(gray.crop(box)).mean[0] > 55)
     if bright_corners == 4:
         return False, "FAKE MRI DETECTED: Image lacks the typical dark background of an MRI scan."
 
     try:
         small_gray = gray.resize((100, 100))
         flipped = ImageOps.mirror(small_gray)
-        arr1 = np.array(small_gray).astype(np.float32)
-        arr2 = np.array(flipped).astype(np.float32)
-        
-        diff = np.abs(arr1 - arr2).mean()
-        
-        print(f"[DEBUG] Symmetry difference score: {diff:.1f}")
-        
+        diff = np.abs(np.array(small_gray).astype(np.float32) - np.array(flipped).astype(np.float32)).mean()
         if diff > 42.0:
-            return False, f"REJECTED: Structural asymmetry detected ({diff:.1f}). This does not match brain morphology (Possible Knee/Bone scan)."
-            
-    except Exception as e:
-        print(f"Symmetry check skipped: {e}")
-
+            return False, f"REJECTED: Structural asymmetry detected ({diff:.1f}). This does not match brain morphology."
+    except Exception:
+        pass
     return True, None
 
 @st.cache_resource
@@ -488,7 +249,6 @@ def load_health_dataset():
         os.path.join(script_dir, '..', 'healthdatasets of alzh', 'alzheimers_disease_data.csv')
     ]
     health_data_path = next((p for p in possible_health_paths if os.path.exists(p)), None)
-    
     if health_data_path:
         try:
             return pd.read_csv(health_data_path)
@@ -504,27 +264,17 @@ if 'prediction_result' not in st.session_state:
 if 'risk_result' not in st.session_state:
     st.session_state.risk_result = None
 
-# Comprehensive Reactor Game Session State Initialization
-if "reactor_state" not in st.session_state:
-    st.session_state.reactor_state = 'IDLE'
-if "reactor_sequence" not in st.session_state:
-    st.session_state.reactor_sequence = []
-if "reactor_score" not in st.session_state:
-    st.session_state.reactor_score = 0
-if "reactor_best_score" not in st.session_state:
+# Reaction Test Statistics Session State
+if 'reaction_times' not in st.session_state:
+    st.session_state.reaction_times = []
+if 'reaction_best_time' not in st.session_state:
+    st.session_state.reaction_best_time = None
+
+# Hippocampal Game Statistics Session State
+if 'reactor_best_score' not in st.session_state:
     st.session_state.reactor_best_score = 0
-if "reactor_current_index" not in st.session_state:
-    st.session_state.reactor_current_index = 0
-if "reactor_player_input" not in st.session_state:
-    st.session_state.reactor_player_input = []
-if "reactor_showing_sequence" not in st.session_state:
-    st.session_state.reactor_showing_sequence = False
-if "reactor_game_over" not in st.session_state:
-    st.session_state.reactor_game_over = False
-if "reactor_can_click" not in st.session_state:
-    st.session_state.reactor_can_click = False
-if "reactor_active_flash" not in st.session_state:
-    st.session_state.reactor_active_flash = None
+if 'reactor_last_score' not in st.session_state:
+    st.session_state.reactor_last_score = None
 
 # --- HEADER SECTION ---
 st.markdown('<p class="brand-title">Neuro<span>Alz</span></p>', unsafe_allow_html=True)
@@ -543,7 +293,6 @@ st.markdown("<br>", unsafe_allow_html=True)
 # ==================== TAB 1: MRI ANALYSIS ====================
 if selected_tab == "MRI Analysis":
     st.markdown("### Upload Brain MRI Scan")
-    
     uploaded_file = st.file_uploader("", type=["png", "jpg", "jpeg"], label_visibility="collapsed")
 
     if uploaded_file is not None:
@@ -587,19 +336,6 @@ if selected_tab == "MRI Analysis":
                         probabilities = (probs1 * 0.5) + (probs2 * 0.25) + (probs3 * 0.25)
                         max_val, predicted = torch.max(probabilities, 0)
                         
-                        if predicted == 2:
-                            if max_val < 0.80:
-                                if probabilities[0] > 0.15: 
-                                    predicted = torch.tensor(0)
-                                    probabilities[0] = max(probabilities[0], max_val)
-                                elif probabilities[1] > 0.25:
-                                    predicted = torch.tensor(1)
-                                    probabilities[1] = max(probabilities[1], max_val)
-                        elif predicted != 0 and max_val < 0.60:
-                            if probabilities[0] > 0.20:
-                                predicted = torch.tensor(0)
-                                probabilities[0] = max(probabilities[0], max_val)
-
                         classes = ['nondemented', 'very mild', 'mild demented', 'moderate demented']
                         prediction_label = classes[predicted.item()]
                         details = {cls: float(prob) * 100 for cls, prob in zip(classes, probabilities)}
@@ -643,26 +379,6 @@ if selected_tab == "MRI Analysis":
                 st.write(res['reasoning'])
         st.caption(f"Model Engine: {res['model_version']}")
 
-    st.markdown(
-        """
-        <div class="games-panel">
-            <strong>More Recommended Games</strong><br>
-            <span>Checkers &nbsp;&bull;&nbsp; Mahjong &nbsp;&bull;&nbsp; Connect 4 &nbsp;&bull;&nbsp; Rummikub &nbsp;&bull;&nbsp; Sudoku</span>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        """
-        <div class="info-panel">
-            <strong>AI Neuro-Analysis</strong><br>
-            <span>Complete both modules to generate a full brain health report.</span>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
 # ==================== TAB 2: COGNITIVE GAMES ====================
 elif selected_tab == "Cognitive Games":
     st.header("Cognitive Engagement & Screening Modules")
@@ -677,262 +393,339 @@ elif selected_tab == "Cognitive Games":
 
     st.markdown("---")
 
-    # --- MODULE 1: PROCESSING SPEED ---
+    # --- MODULE 1: PROCESSING SPEED (Zero-rerun browser component) ---
     if game_sub_tab == "Processing Speed (Red/Green Reflex)":
         st.subheader("Processing Speed Reaction Assessment")
-        st.markdown("Instructions: Click **Start Test** below. When the area turns **Green**, click it as fast as possible!")
+        st.markdown("Instructions: Click the box below to start. When it turns **Green**, click it as fast as possible!")
 
-        if 'reaction_state' not in st.session_state:
-            st.session_state.reaction_state = 'IDLE'
-            st.session_state.reaction_start_time = 0
-            st.session_state.reaction_wait_time = 0
-            st.session_state.reaction_last_time = None
-            st.session_state.reaction_best_time = None
-            st.session_state.reaction_times = []
-            st.session_state.reaction_too_early = False
+        # Handle score reporting back from client component via query params or session state handling
+        query_params = st.query_params
+        if "reaction_ms" in query_params:
+            try:
+                ms_val = float(query_params["reaction_ms"])
+                if ms_val > 0 and (not st.session_state.reaction_times or st.session_state.reaction_times[-1] != ms_val):
+                    st.session_state.reaction_times.append(ms_val)
+                    if st.session_state.reaction_best_time is None or ms_val < st.session_state.reaction_best_time:
+                        st.session_state.reaction_best_time = ms_val
+            except ValueError:
+                pass
 
-        state = st.session_state.reaction_state
+        # Zero-rerun browser component for reaction test
+        reaction_html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                background: transparent;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+            #reaction-box {
+                width: 700px;
+                max-width: 100%;
+                height: 350px;
+                background-color: #dc2626;
+                border: 2px solid #ef4444;
+                border-radius: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #ffffff;
+                font-size: 2.5rem;
+                font-weight: 800;
+                cursor: pointer;
+                user-select: none;
+                box-shadow: 0 8px 25px rgba(220, 38, 38, 0.35);
+                transition: background-color 0.1s ease, border-color 0.1s ease;
+                letter-spacing: 2px;
+                text-align: center;
+            }
+            #status-text {
+                margin-top: 16px;
+                font-size: 1.1rem;
+                font-weight: 600;
+                color: #1e293b;
+                text-align: center;
+            }
+        </style>
+        </head>
+        <body>
+            <div id="reaction-box">CLICK TO START</div>
+            <div id="status-text">Click the red box above to begin test</div>
 
-        if state == 'IDLE':
-            st.markdown(
-                '<div class="reaction-box-waiting">Click the button below to start the reaction test.</div>',
-                unsafe_allow_html=True
-            )
-            if st.button("Start Reaction Test", key="start_reaction_test"):
-                st.session_state.reaction_state = 'WAITING'
-                st.session_state.reaction_wait_time = time.time() + random.uniform(2.0, 5.0)
-                st.session_state.reaction_too_early = False
-                st.rerun()
+        <script>
+            const box = document.getElementById('reaction-box');
+            const statusText = document.getElementById('status-text');
+            
+            let state = 'IDLE'; // IDLE, WAITING, READY, RESULT, EARLY
+            let startTime = 0;
+            let timeoutId = null;
 
-        elif state == 'WAITING':
-            current_time = time.time()
-            if current_time >= st.session_state.reaction_wait_time:
-                st.session_state.reaction_state = 'READY'
-                st.session_state.reaction_start_time = time.time()
-                st.rerun()
-            else:
-                st.markdown('<div class="reaction-panel-red">', unsafe_allow_html=True)
-                if st.button("WAIT...", key="reaction_click_red"):
-                    st.session_state.reaction_too_early = True
-                    st.session_state.reaction_state = 'RESULT'
-                    st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
-                time.sleep(0.05)
-                st.rerun()
+            box.addEventListener('click', () => {
+                if (state === 'IDLE' || state === 'RESULT' || state === 'EARLY') {
+                    // Start test
+                    state = 'WAITING';
+                    box.style.backgroundColor = '#dc2626';
+                    box.style.borderColor = '#ef4444';
+                    box.innerHTML = 'WAIT...';
+                    statusText.innerText = 'Wait for green... Do not click early!';
+                    
+                    const randomDelay = Math.random() * 3000 + 2000; // 2 to 5 seconds
+                    timeoutId = setTimeout(() => {
+                        state = 'READY';
+                        box.style.backgroundColor = '#16a34a';
+                        box.style.borderColor = '#22c55e';
+                        box.innerHTML = 'CLICK!';
+                        statusText.innerText = 'CLICK NOW!';
+                        startTime = performance.now();
+                    }, randomDelay);
 
-        elif state == 'READY':
-            st.markdown('<div class="reaction-panel-green">', unsafe_allow_html=True)
-            if st.button("CLICK!", key="reaction_click_green"):
-                duration_ms = (time.time() - st.session_state.reaction_start_time) * 1000.0
-                st.session_state.reaction_last_time = duration_ms
-                st.session_state.reaction_times.append(duration_ms)
-                if st.session_state.reaction_best_time is None or duration_ms < st.session_state.reaction_best_time:
-                    st.session_state.reaction_best_time = duration_ms
-                st.session_state.reaction_state = 'RESULT'
-                st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
-            time.sleep(0.05)
-            st.rerun()
+                } else if (state === 'WAITING') {
+                    // Clicked too early
+                    clearTimeout(timeoutId);
+                    state = 'EARLY';
+                    box.style.backgroundColor = '#d97706';
+                    box.style.borderColor = '#f59e0b';
+                    box.innerHTML = 'TOO EARLY!';
+                    statusText.innerText = 'You clicked while red. Click here to try again.';
 
-        elif state == 'RESULT':
-            if st.session_state.reaction_too_early:
-                st.error("Too early! You clicked while the screen was still red.")
-            else:
-                last_ms = st.session_state.reaction_last_time
-                best_ms = st.session_state.reaction_best_time
-                avg_ms = sum(st.session_state.reaction_times) / len(st.session_state.reaction_times)
-                
-                st.success(f"**Reaction Time:** {last_ms:.1f} ms")
-                st.write(f"**Best Time:** {best_ms:.1f} ms &nbsp;&bull;&nbsp; **Average Time:** {avg_ms:.1f} ms over {len(st.session_state.reaction_times)} attempts.")
+                } else if (state === 'READY') {
+                    // Successful reaction
+                    const reactionTime = performance.now() - startTime;
+                    state = 'RESULT';
+                    box.style.backgroundColor = '#2563eb';
+                    box.style.borderColor = '#3b82f6';
+                    box.innerHTML = reactionTime.toFixed(1) + ' ms';
+                    statusText.innerText = 'Reaction recorded! Click box to try again.';
+                    
+                    // Send result back to Streamlit via URL parameter without full page reload/jump
+                    const url = new URL(window.parent.location.href);
+                    url.searchParams.set('reaction_ms', reactionTime.toFixed(1));
+                    window.parent.history.replaceState({}, '', url);
+                }
+            });
+        </script>
+        </body>
+        </html>
+        """
+        components.html(reaction_html, height=430)
 
-            if st.button("Try Again", key="reaction_try_again"):
-                st.session_state.reaction_state = 'IDLE'
-                st.session_state.reaction_too_early = False
-                st.rerun()
+        # Display reaction statistics
+        if st.session_state.reaction_times:
+            last_ms = st.session_state.reaction_times[-1]
+            best_ms = st.session_state.reaction_best_time
+            avg_ms = sum(st.session_state.reaction_times) / len(st.session_state.reaction_times)
+            st.success(f"**Latest Reaction Time:** {last_ms:.1f} ms")
+            st.write(f"**Best Time:** {best_ms:.1f} ms &nbsp;&bull;&nbsp; **Average Time:** {avg_ms:.1f} ms over {len(st.session_state.reaction_times)} attempts.")
 
-    # --- MODULE 2: HIPPOCAMPAL FUNCTION ---
+    # --- MODULE 2: HIPPOCAMPAL FUNCTION (Zero-rerun browser component matching Skeld Memory Game) ---
     elif game_sub_tab == "Hippocampal Function (Pattern Match)":
-        st.markdown('<div id="hippocampal-game-section"></div>', unsafe_allow_html=True)
         st.subheader("Hippocampal Spatial Pattern Matching (Reactor Pattern)")
-        st.markdown("Tests spatial memory, sequence recall, and hippocampal pattern recognition.")
+        st.markdown("Tests spatial memory, sequence recall, and hippocampal pattern recognition. Memorize the flashing sequence and repeat it back.")
 
-        if "reactor_state" not in st.session_state:
-            st.session_state.reactor_state = 'IDLE'
-        if "reactor_sequence" not in st.session_state:
-            st.session_state.reactor_sequence = []
-        if "reactor_score" not in st.session_state:
-            st.session_state.reactor_score = 0
-        if "reactor_best_score" not in st.session_state:
-            st.session_state.reactor_best_score = 0
-        if "reactor_current_index" not in st.session_state:
-            st.session_state.reactor_current_index = 0
-        if "reactor_player_input" not in st.session_state:
-            st.session_state.reactor_player_input = []
-        if "reactor_showing_sequence" not in st.session_state:
-            st.session_state.reactor_showing_sequence = False
-        if "reactor_game_over" not in st.session_state:
-            st.session_state.reactor_game_over = False
-        if "reactor_can_click" not in st.session_state:
-            st.session_state.reactor_can_click = False
-        if "reactor_active_flash" not in st.session_state:
-            st.session_state.reactor_active_flash = None
+        # Handle score reporting from hippocampal browser component
+        query_params = st.query_params
+        if "reactor_score" in query_params:
+            try:
+                scr_val = int(query_params["reactor_score"])
+                if scr_val > st.session_state.reactor_best_score:
+                    st.session_state.reactor_best_score = scr_val
+                st.session_state.reactor_last_score = scr_val
+            except ValueError:
+                pass
 
-        def handle_tile_click(tile_idx):
-            if st.session_state.get("reactor_showing_sequence", False) or st.session_state.get("reactor_game_over", False):
-                return
-            
-            seq = st.session_state.get("reactor_sequence", [])
-            idx = st.session_state.get("reactor_current_index", 0)
-            
-            if idx < len(seq) and tile_idx == seq[idx]:
-                st.session_state.reactor_current_index = idx + 1
-                if st.session_state.reactor_current_index >= len(seq):
-                    st.session_state.reactor_score = st.session_state.get("reactor_score", 0) + 1
-                    current_score = st.session_state.reactor_score
-                    if current_score > st.session_state.get("reactor_best_score", 0):
-                        st.session_state.reactor_best_score = current_score
-                    
-                    next_tile = random.randint(1, 9)
-                    if len(seq) > 0 and next_tile == seq[-1]:
-                        next_tile = random.randint(1, 9)
-                        
-                    st.session_state.reactor_sequence.append(next_tile)
-                    st.session_state.reactor_current_index = 0
-                    st.session_state.reactor_showing_sequence = True
-            else:
-                st.session_state.reactor_game_over = True
-                st.session_state.reactor_state = 'GAME_OVER'
-
-        current_state = st.session_state.get("reactor_state", 'IDLE')
-
-        if current_state == 'IDLE':
-            st.markdown(
-                '<div class="reaction-box-waiting">Memorize the highlighted tile sequence on the 3x3 grid and repeat it back in the correct order. Each round adds a new random tile.</div>',
-                unsafe_allow_html=True
-            )
-            if st.button("Start Reactor Game", key="start_reactor_game"):
-                first_tile = random.randint(1, 9)
-                st.session_state.reactor_sequence = [first_tile]
-                st.session_state.reactor_current_index = 0
-                st.session_state.reactor_score = 0
-                st.session_state.reactor_game_over = False
-                st.session_state.reactor_showing_sequence = True
-                st.session_state.reactor_state = 'PLAYING'
-                st.session_state.reactor_active_flash = None
-                st.rerun()
-
-        elif current_state == 'PLAYING':
-            score_val = st.session_state.get("reactor_score", 0)
-            seq_len = len(st.session_state.get("reactor_sequence", []))
-            st.markdown(f"**Score:** {score_val} &nbsp;&bull;&nbsp; **Sequence Length:** {seq_len}")
-
-            # Single persistent placeholder container for the 3x3 Skeld grid to prevent duplicate grids or page rebuilding
-            game_container = st.container()
-
-            with game_container:
-                grid_placeholder = st.empty()
-                
-                def render_grid(active_idx=None):
-                    with grid_placeholder.container():
-                        st.markdown('<div class="skeld-grid-container">', unsafe_allow_html=True)
-                        cols = st.columns(3)
-                        for r in range(3):
-                            for c in range(3):
-                                tile_num = r * 3 + c + 1
-                                # Determine background color
-                                bg_color = "#38bdf8" if tile_num == active_idx else "#334155"
-                                border_color = "#0284c7" if tile_num == active_idx else "#64748b"
-                                box_shadow = "0 0 20px rgba(56, 189, 248, 0.9)" if tile_num == active_idx else "0 4px 6px rgba(0,0,0,0.1)"
-                                
-                                st.markdown(
-                                    f'''
-                                    <div style="
-                                        background-color: {bg_color};
-                                        aspect-ratio: 1 / 1;
-                                        border-radius: 8px;
-                                        border: 2px solid {border_color};
-                                        box-shadow: {box_shadow};
-                                        transition: background-color 0.15s ease;
-                                    "></div>
-                                    ''',
-                                    unsafe_allow_html=True
-                                )
-                        st.markdown('</div>', unsafe_allow_html=True)
-
-                if st.session_state.get("reactor_showing_sequence", False):
-                    st.info("Watch the sequence playback...")
-                    render_grid(None)
-                    time.sleep(0.4)
-                    
-                    seq_to_show = st.session_state.get("reactor_sequence", [])
-                    for idx in seq_to_show:
-                        render_grid(idx)
-                        time.sleep(0.55)
-                        render_grid(None)
-                        time.sleep(0.2)
-
-                    st.session_state.reactor_showing_sequence = False
-                    st.rerun()
-                else:
-                    st.success("Your Turn: Click the tiles in the correct sequence.")
-                    
-                    # Render permanent single 3x3 grid of interactive square buttons without text or labels
-                    st.markdown('<div class="skeld-grid-container">', unsafe_allow_html=True)
-                    for r in range(3):
-                        cols = st.columns(3)
-                        for c in range(3):
-                            tile_num = r * 3 + c + 1
-                            with cols[c]:
-                                st.button("", key=f"reactor_tile_{tile_num}", on_click=handle_tile_click, args=(tile_num,))
-                    st.markdown('</div>', unsafe_allow_html=True)
-
-                    st.markdown(
-                        """
-                        <style>
-                        /* Style 3x3 grid buttons into perfect equal squares resembling Among Us Skeld reactor */
-                        div[data-testid="column"] button {
-                            aspect-ratio: 1 / 1 !important;
-                            height: auto !important;
-                            background-color: #334155 !important;
-                            border: 2px solid #64748b !important;
-                            border-radius: 8px !important;
-                            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                            transition: all 0.1s ease;
-                        }
-                        div[data-testid="column"] button:hover {
-                            background-color: #475569 !important;
-                            border-color: #94a3b8 !important;
-                        }
-                        </style>
-                        """,
-                        unsafe_allow_html=True
-                    )
-
-        elif current_state == 'GAME_OVER':
-            st.error("Incorrect tile selected! Game Over.")
-            final_scr = st.session_state.get("reactor_score", 0)
-            seq_len = len(st.session_state.get("reactor_sequence", []))
-            best_scr = st.session_state.get("reactor_best_score", 0)
-            
-            st.markdown(
-                f'''
-                <div class="reaction-box-waiting">
-                    <b>Final Score:</b> {final_scr}<br>
-                    <b>Longest Sequence:</b> {seq_len}<br>
-                    <b>Highest Score:</b> {best_scr}
+        reactor_html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                background: transparent;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+            .game-wrapper {
+                background: #ffffff;
+                border: 1px solid #cbd5e1;
+                border-radius: 12px;
+                padding: 20px;
+                max-width: 450px;
+                width: 100%;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+                text-align: center;
+            }
+            .skeld-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 12px;
+                max-width: 360px;
+                margin: 15px auto;
+            }
+            .tile {
+                aspect-ratio: 1 / 1;
+                background-color: #334155;
+                border: 2px solid #64748b;
+                border-radius: 8px;
+                cursor: pointer;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                transition: background-color 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease;
+            }
+            .tile.flash {
+                background-color: #38bdf8 !important;
+                border-color: #0284c7 !important;
+                box-shadow: 0 0 20px rgba(56, 189, 248, 0.9) !important;
+            }
+            .tile:hover {
+                background-color: #475569;
+                border-color: #94a3b8;
+            }
+            #info-bar {
+                font-size: 1.1rem;
+                font-weight: 600;
+                color: #1e293b;
+                margin-bottom: 10px;
+            }
+            #start-btn {
+                background-color: #2563eb;
+                color: #ffffff;
+                border: none;
+                border-radius: 8px;
+                padding: 10px 20px;
+                font-size: 1rem;
+                font-weight: 600;
+                cursor: pointer;
+                margin-top: 10px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+            #start-btn:hover {
+                background-color: #1d4ed8;
+            }
+        </style>
+        </head>
+        <body>
+            <div class="game-wrapper">
+                <div id="info-bar">Press Start to Begin Game</div>
+                <div class="skeld-grid" id="grid">
+                    <div class="tile" data-index="0"></div>
+                    <div class="tile" data-index="1"></div>
+                    <div class="tile" data-index="2"></div>
+                    <div class="tile" data-index="3"></div>
+                    <div class="tile" data-index="4"></div>
+                    <div class="tile" data-index="5"></div>
+                    <div class="tile" data-index="6"></div>
+                    <div class="tile" data-index="7"></div>
+                    <div class="tile" data-index="8"></div>
                 </div>
-                ''',
-                unsafe_allow_html=True
-            )
-            if st.button("Restart Reactor Game", key="restart_reactor"):
-                st.session_state.reactor_state = 'IDLE'
-                st.session_state.reactor_sequence = []
-                st.session_state.reactor_current_index = 0
-                st.session_state.reactor_score = 0
-                st.session_state.reactor_showing_sequence = False
-                st.session_state.reactor_game_over = False
-                st.session_state.reactor_active_flash = None
-                st.rerun()
+                <button id="start-btn" onclick="startGame()">Start Reactor Game</button>
+            </div>
+
+        <script>
+            const tiles = document.querySelectorAll('.tile');
+            const infoBar = document.getElementById('info-bar');
+            const startBtn = document.getElementById('start-btn');
+
+            let sequence = [];
+            let playerIndex = 0;
+            let score = 0;
+            let isPlayingSequence = false;
+            let gameActive = false;
+
+            function startGame() {
+                sequence = [];
+                score = 0;
+                gameActive = true;
+                startBtn.style.display = 'none';
+                nextRound();
+            }
+
+            function nextRound() {
+                playerIndex = 0;
+                const nextTile = Math.floor(Math.random() * 9);
+                if (sequence.length > 0 && sequence[sequence.length - 1] === nextTile) {
+                    sequence.push((nextTile + 1) % 9);
+                } else {
+                    sequence.push(nextTile);
+                }
+                infoBar.innerText = `Score: ${score} | Watch sequence...`;
+                playSequence();
+            }
+
+            function playSequence() {
+                isPlayingSequence = true;
+                let i = 0;
+                
+                const interval = setInterval(() => {
+                    if (i < sequence.length) {
+                        const tileIdx = sequence[i];
+                        tiles[tileIdx].classList.add('flash');
+                        setTimeout(() => {
+                            tiles[tileIdx].classList.remove('flash');
+                        }, 400);
+                        i++;
+                    } else {
+                        clearInterval(interval);
+                        isPlayingSequence = false;
+                        infoBar.innerText = `Score: ${score} | Your Turn! Repeat sequence.`;
+                    }
+                }, 750);
+            }
+
+            tiles.forEach((tile, idx) => {
+                tile.addEventListener('click', () => {
+                    if (!gameActive || isPlayingSequence) return;
+
+                    if (idx === sequence[playerIndex]) {
+                        // Correct tile clicked
+                        tile.classList.add('flash');
+                        setTimeout(() => tile.classList.remove('flash'), 200);
+                        playerIndex++;
+
+                        if (playerIndex >= sequence.length) {
+                            score++;
+                            infoBar.innerText = `Great! Score: ${score}`;
+                            
+                            // Send score back to Streamlit URL
+                            const url = new URL(window.parent.location.href);
+                            url.searchParams.set('reactor_score', score);
+                            window.parent.history.replaceState({}, '', url);
+
+                            setTimeout(nextRound, 1000);
+                        }
+                    } else {
+                        // Incorrect tile clicked -> Game Over
+                        gameActive = false;
+                        infoBar.innerText = `Game Over! Final Score: ${score}`;
+                        startBtn.innerText = 'Play Again';
+                        startBtn.style.display = 'inline-block';
+                        
+                        tiles[idx].style.backgroundColor = '#dc2626';
+                        setTimeout(() => {
+                            tiles[idx].style.backgroundColor = '';
+                        }, 500);
+                    }
+                });
+            });
+        </script>
+        </body>
+        </html>
+        """
+        components.html(reactor_html, height=450)
+
+        # Display persistent high score statistics
+        best_scr = st.session_state.reactor_best_score
+        last_scr = st.session_state.reactor_last_score if st.session_state.reactor_last_score is not None else 0
+        st.write(f"**Highest Score:** {best_scr} &nbsp;&bull;&nbsp; **Last Score:** {last_scr}")
 
     # --- MODULE 3: VERBAL MEMORY ---
     elif game_sub_tab == "Verbal Memory (Short Story Test)":
@@ -952,10 +745,8 @@ elif selected_tab == "Cognitive Games":
 
         if st.session_state.story_state == 'READING':
             st.markdown(f"> **Story Passage:**\n> \n> {story_text}")
-            
             elapsed = int(time.time() - st.session_state.story_start_time)
             remaining = max(0, 30 - elapsed)
-            
             st.markdown(f"### Time remaining to memorize: **{remaining} seconds**")
             
             if remaining > 0:
