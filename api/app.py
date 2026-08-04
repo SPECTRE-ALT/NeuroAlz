@@ -211,51 +211,53 @@ st.markdown(
         color: #1e293b !important;
     }
 
-    /* Reflex Game Box Styling with Visible High-Contrast Text */
-    .reflex-box-red {
+    /* Reaction Test Box Styling */
+    .reaction-box-red {
         background-color: #b91c1c !important;
         border: 2px solid #ef4444 !important;
-        border-radius: 12px;
-        padding: 30px;
+        border-radius: 16px;
+        padding: 80px 20px;
         text-align: center;
         margin: 20px 0;
         color: #ffffff !important;
-        font-size: 1.5rem;
+        font-size: 2rem;
         font-weight: bold;
-        box-shadow: 0 4px 15px rgba(185, 28, 28, 0.4);
+        box-shadow: 0 4px 20px rgba(185, 28, 28, 0.4);
+        cursor: pointer;
     }
-    .reflex-box-red * {
+    .reaction-box-red * {
         color: #ffffff !important;
     }
 
-    .reflex-box-green {
+    .reaction-box-green {
         background-color: #15803d !important;
         border: 2px solid #22c55e !important;
-        border-radius: 12px;
-        padding: 30px;
+        border-radius: 16px;
+        padding: 80px 20px;
         text-align: center;
         margin: 20px 0;
         color: #ffffff !important;
-        font-size: 1.5rem;
+        font-size: 2.5rem;
         font-weight: bold;
-        box-shadow: 0 4px 15px rgba(21, 128, 61, 0.4);
+        box-shadow: 0 4px 20px rgba(21, 128, 61, 0.4);
+        cursor: pointer;
     }
-    .reflex-box-green * {
+    .reaction-box-green * {
         color: #ffffff !important;
     }
 
-    .reflex-box-waiting {
+    .reaction-box-waiting {
         background-color: #ffffff !important;
         border: 2px solid #cbd5e1 !important;
         border-radius: 12px;
-        padding: 30px;
+        padding: 40px 20px;
         text-align: center;
         margin: 20px 0;
         color: #1e293b !important;
         font-size: 1.2rem;
         box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
-    .reflex-box-waiting * {
+    .reaction-box-waiting * {
         color: #1e293b !important;
     }
 
@@ -630,69 +632,82 @@ elif selected_tab == "Cognitive Games":
 
     # --- MODULE 1: PROCESSING SPEED ---
     if game_sub_tab == "Processing Speed (Red/Green Reflex)":
-        st.subheader("Processing Speed Reflex Assessment")
-        st.markdown("Instructions: Click **Green** targets as fast as possible when they appear. Avoid clicking **Red** targets.")
+        st.subheader("Processing Speed Reaction Assessment")
+        st.markdown("Instructions: Click **Start Test** to begin. Wait for the screen to turn **Green**, then click as fast as possible!")
 
-        if 'reflex_state' not in st.session_state:
-            st.session_state.reflex_state = 'IDLE'
-            st.session_state.reflex_target = None
-            st.session_state.reflex_start_time = 0
-            st.session_state.reflex_score = 0
-            st.session_state.reflex_rounds = 0
+        if 'reaction_state' not in st.session_state:
+            st.session_state.reaction_state = 'IDLE'
+            st.session_state.reaction_start_time = 0
+            st.session_state.reaction_wait_time = 0
+            st.session_state.reaction_last_time = None
+            st.session_state.reaction_best_time = None
+            st.session_state.reaction_times = []
+            st.session_state.reaction_too_early = False
 
-        st.markdown('<div class="start-reflex-card">', unsafe_allow_html=True)
-        col_btn1, col_btn2 = st.columns(2)
-        with col_btn1:
-            start_reflex = st.button("Start Reflex Test")
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        if start_reflex:
-            time.sleep(random.uniform(0.5, 1.5))
-            st.session_state.reflex_state = 'ACTIVE'
-            st.session_state.reflex_target = random.choice(['GREEN', 'RED', 'GREEN', 'GREEN', 'RED'])
-            st.session_state.reflex_start_time = time.time()
-            st.session_state.reflex_rounds += 1
+        state = st.session_state.reaction_state
 
-        if st.session_state.reflex_state == 'ACTIVE':
-            target = st.session_state.reflex_target
-            
-            if target == 'RED':
-                st.markdown(
-                    f'<div class="reflex-box-red">TARGET SIGNAL: RED<br><span style="font-size: 1rem; font-weight: normal; color: #ffffff !important;">(Do NOT click! Wait or click Red button if penalizing)</span></div>',
-                    unsafe_allow_html=True
-                )
-            else:
-                st.markdown(
-                    f'<div class="reflex-box-green">TARGET SIGNAL: GREEN<br><span style="font-size: 1rem; font-weight: normal; color: #ffffff !important;">(Click Green immediately to calculate ms reaction time!)</span></div>',
-                    unsafe_allow_html=True
-                )
-            
-            c1, c2 = st.columns(2)
-            with c1:
-                if st.button("Click RED", key="click_red"):
-                    reaction_time_ms = (time.time() - st.session_state.reflex_start_time) * 1000.0
-                    if target == 'RED':
-                        st.session_state.reflex_score += 1
-                        st.success(f"Correct! Reaction Time: {reaction_time_ms:.1f} ms")
-                    else:
-                        st.error(f"Incorrect! That was a Green target. Reaction time was {reaction_time_ms:.1f} ms")
-                    st.session_state.reflex_state = 'IDLE'
-            with c2:
-                if st.button("Click GREEN", key="click_green"):
-                    reaction_time_ms = (time.time() - st.session_state.reflex_start_time) * 1000.0
-                    if target == 'GREEN':
-                        st.session_state.reflex_score += 1
-                        st.success(f"Correct! Reaction Time: {reaction_time_ms:.1f} ms")
-                    else:
-                        st.error(f"Incorrect! That was a Red target. Reaction time was {reaction_time_ms:.1f} ms")
-                    st.session_state.reflex_state = 'IDLE'
-        else:
+        if state == 'IDLE':
             st.markdown(
-                '<div class="reflex-box-waiting">Click <b>"Start Reflex Test"</b> to begin the flashing sequence.</div>',
+                '<div class="reaction-box-waiting">Click the button below to start the reaction test.</div>',
                 unsafe_allow_html=True
             )
+            if st.button("Start Reaction Test", key="start_reaction_test"):
+                st.session_state.reaction_state = 'WAITING'
+                st.session_state.reaction_wait_time = time.time() + random.uniform(2.0, 5.0)
+                st.session_state.reaction_too_early = False
+                st.rerun()
 
-        st.write(f"**Current Score:** {st.session_state.reflex_score} correct responses.")
+        elif state == 'WAITING':
+            # Check if user clicked early
+            current_time = time.time()
+            if current_time >= st.session_state.reaction_wait_time:
+                st.session_state.reaction_state = 'READY'
+                st.session_state.reaction_start_time = time.time()
+                st.rerun()
+            else:
+                # Render red waiting box with click handler
+                st.markdown(
+                    '<div class="reaction-box-red">Wait for Green...<br><span style="font-size: 1.1rem; font-weight: normal;">(Click now = Too early!)</span></div>',
+                    unsafe_allow_html=True
+                )
+                if st.button("CLICK HERE", key="reaction_early_click"):
+                    st.session_state.reaction_too_early = True
+                    st.session_state.reaction_state = 'RESULT'
+                    st.rerun()
+                time.sleep(0.05)
+                st.rerun()
+
+        elif state == 'READY':
+            st.markdown(
+                '<div class="reaction-box-green">CLICK!</div>',
+                unsafe_allow_html=True
+            )
+            if st.button("CLICK HERE NOW!", key="reaction_click_ready"):
+                duration_ms = (time.time() - st.session_state.reaction_start_time) * 1000.0
+                st.session_state.reaction_last_time = duration_ms
+                st.session_state.reaction_times.append(duration_ms)
+                if st.session_state.reaction_best_time is None or duration_ms < st.session_state.reaction_best_time:
+                    st.session_state.reaction_best_time = duration_ms
+                st.session_state.reaction_state = 'RESULT'
+                st.rerun()
+            time.sleep(0.05)
+            st.rerun()
+
+        elif state == 'RESULT':
+            if st.session_state.reaction_too_early:
+                st.error("Too early! You clicked while the screen was still red.")
+            else:
+                last_ms = st.session_state.reaction_last_time
+                best_ms = st.session_state.reaction_best_time
+                avg_ms = sum(st.session_state.reaction_times) / len(st.session_state.reaction_times)
+                
+                st.success(f"**Reaction Time:** {last_ms:.1f} ms")
+                st.write(f"**Best Time:** {best_ms:.1f} ms &nbsp;&bull;&nbsp; **Average Time:** {avg_ms:.1f} ms over {len(st.session_state.reaction_times)} attempts.")
+
+            if st.button("Try Again", key="reaction_try_again"):
+                st.session_state.reaction_state = 'IDLE'
+                st.session_state.reaction_too_early = False
+                st.rerun()
 
     # --- MODULE 2: HIPPOCAMPAL FUNCTION ---
     elif game_sub_tab == "Hippocampal Function (Pattern Match)":
@@ -788,9 +803,9 @@ elif selected_tab == "Cognitive Games":
                                 tile_num = r * 3 + c + 1
                                 with cols[c]:
                                     if tile_num == active_idx:
-                                        st.markdown(f'<div style="background-color: #2563eb; color: #ffffff !important; padding: 30px; text-align: center; border-radius: 12px; font-weight: bold; font-size: 1.1rem; border: 2px solid #1d4ed8; box-shadow: 0 0 20px rgba(37, 99, 235, 0.7);">Tile {tile_num}</div>', unsafe_allow_html=True)
+                                        st.markdown(f'<div style="background-color: #2563eb; height: 90px; border-radius: 12px; border: 2px solid #1d4ed8; box-shadow: 0 0 20px rgba(37, 99, 235, 0.8);"></div>', unsafe_allow_html=True)
                                     else:
-                                        st.markdown(f'<div style="background-color: #ffffff; color: #1e293b !important; padding: 30px; text-align: center; border-radius: 12px; font-weight: bold; font-size: 1.1rem; border: 1px solid #cbd5e1;">Tile {tile_num}</div>', unsafe_allow_html=True)
+                                        st.markdown(f'<div style="background-color: #e2e8f0; height: 90px; border-radius: 12px; border: 1px solid #cbd5e1;"></div>', unsafe_allow_html=True)
 
                 # Initial pause before playback
                 render_grid(None)
@@ -809,13 +824,35 @@ elif selected_tab == "Cognitive Games":
             else:
                 st.success("Your Turn: Click the tiles in the correct sequence.")
                 
-                # Single permanent interactive 3x3 grid for player input
+                # Single permanent interactive 3x3 grid for player input using clean square tiles without labels
                 for r in range(3):
                     cols = st.columns(3)
                     for c in range(3):
                         tile_num = r * 3 + c + 1
                         with cols[c]:
-                            st.button(f"Tile {tile_num}", key=f"reactor_tile_{tile_num}", on_click=handle_tile_click, args=(tile_num,))
+                            if st.button("", key=f"reactor_tile_{tile_num}", on_click=handle_tile_click, args=(tile_num,)):
+                                pass
+                            # Apply inline CSS injection for square appearance via markdown overlay if needed, or rely on custom CSS styling for empty button appearance
+                st.markdown(
+                    """
+                    <style>
+                    /* Style 3x3 grid buttons to look like clean Skeld reactor square tiles */
+                    div[data-testid="column"] button {
+                        height: 90px !important;
+                        background-color: #e2e8f0 !important;
+                        border: 1px solid #cbd5e1 !important;
+                        border-radius: 12px !important;
+                        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                        transition: all 0.15s ease;
+                    }
+                    div[data-testid="column"] button:hover {
+                        background-color: #cbd5e1 !important;
+                        border-color: #94a3b8 !important;
+                    }
+                    </style>
+                    """,
+                    unsafe_allow_html=True
+                )
 
         elif current_state == 'GAME_OVER':
             st.error("Incorrect tile selected! Game Over.")
