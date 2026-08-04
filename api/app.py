@@ -549,7 +549,7 @@ elif selected_tab == "Cognitive Games":
             st.success(f"**Latest Reaction Time:** {last_ms:.1f} ms")
             st.write(f"**Best Time:** {best_ms:.1f} ms &nbsp;&bull;&nbsp; **Average Time:** {avg_ms:.1f} ms over {len(st.session_state.reaction_times)} attempts.")
 
-    # --- MODULE 2: HIPPOCAMPAL FUNCTION (Zero-rerun browser component with full button visibility height) ---
+    # --- MODULE 2: HIPPOCAMPAL FUNCTION (Zero-rerun browser component with randomized starting pattern per session) ---
     elif game_sub_tab == "Hippocampal Function (Pattern Match)":
         st.subheader("Hippocampal Spatial Pattern Matching (Reactor Pattern)")
         st.markdown("Tests spatial memory, sequence recall, and hippocampal pattern recognition. Memorize the flashing sequence and repeat it back.")
@@ -564,12 +564,15 @@ elif selected_tab == "Cognitive Games":
             except ValueError:
                 pass
 
-        reactor_html = """
+        # Generate unique starting token salt for this render session so initial pattern is never identical across page sessions
+        init_rand_seed = random.randint(0, 999999)
+
+        reactor_html = f"""
         <!DOCTYPE html>
         <html>
         <head>
         <style>
-            body {
+            body {{
                 margin: 0;
                 padding: 10px;
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -579,8 +582,8 @@ elif selected_tab == "Cognitive Games":
                 align-items: center;
                 justify-content: flex-start;
                 box-sizing: border-box;
-            }
-            .game-wrapper {
+            }}
+            .game-wrapper {{
                 background: #ffffff;
                 border: 1px solid #cbd5e1;
                 border-radius: 12px;
@@ -590,15 +593,15 @@ elif selected_tab == "Cognitive Games":
                 box-shadow: 0 2px 10px rgba(0,0,0,0.05);
                 text-align: center;
                 box-sizing: border-box;
-            }
-            .skeld-grid {
+            }}
+            .skeld-grid {{
                 display: grid;
                 grid-template-columns: repeat(3, 1fr);
                 gap: 12px;
                 max-width: 320px;
                 margin: 15px auto;
-            }
-            .tile {
+            }}
+            .tile {{
                 aspect-ratio: 1 / 1;
                 background-color: #334155;
                 border: 2px solid #64748b;
@@ -606,23 +609,23 @@ elif selected_tab == "Cognitive Games":
                 cursor: pointer;
                 box-shadow: 0 4px 6px rgba(0,0,0,0.1);
                 transition: background-color 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease;
-            }
-            .tile.flash {
+            }}
+            .tile.flash {{
                 background-color: #38bdf8 !important;
                 border-color: #0284c7 !important;
                 box-shadow: 0 0 20px rgba(56, 189, 248, 0.9) !important;
-            }
-            .tile:hover {
+            }}
+            .tile:hover {{
                 background-color: #475569;
                 border-color: #94a3b8;
-            }
-            #info-bar {
+            }}
+            #info-bar {{
                 font-size: 1.05rem;
                 font-weight: 600;
                 color: #1e293b;
                 margin-bottom: 12px;
-            }
-            #start-btn {
+            }}
+            #start-btn {{
                 background-color: #2563eb;
                 color: #ffffff;
                 border: 1px solid #1d4ed8;
@@ -636,10 +639,10 @@ elif selected_tab == "Cognitive Games":
                 display: inline-block;
                 width: auto;
                 min-width: 180px;
-            }
-            #start-btn:hover {
+            }}
+            #start-btn:hover {{
                 background-color: #1d4ed8;
-            }
+            }}
         </style>
         </head>
         <body>
@@ -670,93 +673,110 @@ elif selected_tab == "Cognitive Games":
             let isPlayingSequence = false;
             let gameActive = false;
 
-            function startGame() {
+            // Seed pseudo-random generator with session salt token so starting pattern is unique each launch
+            let seed = {init_rand_seed};
+            function pseudoRandom() {{
+                seed = (seed * 9301 + 49297) % 233280;
+                return seed / 233280;
+            }}
+
+            function startGame() {{
                 sequence = [];
                 score = 0;
                 gameActive = true;
                 startBtn.style.display = 'none';
-                nextRound();
-            }
+                
+                // Generate completely random starting pattern sequence (length 2 to ensure uniqueness)
+                const firstTile = Math.floor(pseudoRandom() * 9);
+                let secondTile = Math.floor(pseudoRandom() * 9);
+                if (secondTile === firstTile) {{
+                    secondTile = (firstTile + 1) % 9;
+                }}
+                sequence.push(firstTile);
+                sequence.push(secondTile);
 
-            function nextRound() {
+                infoBar.innerText = `Score: ${{score}} | Watch sequence...`;
+                playSequence();
+            }}
+
+            function nextRound() {{
                 playerIndex = 0;
                 const nextTile = Math.floor(Math.random() * 9);
-                if (sequence.length > 0 && sequence[sequence.length - 1] === nextTile) {
+                if (sequence.length > 0 && sequence[sequence.length - 1] === nextTile) {{
                     sequence.push((nextTile + 1) % 9);
-                } else {
+                }} else {{
                     sequence.push(nextTile);
-                }
-                infoBar.innerText = `Score: ${score} | Watch sequence...`;
+                }}
+                infoBar.innerText = `Score: ${{score}} | Watch sequence...`;
                 playSequence();
-            }
+            }}
 
-            function playSequence() {
+            function playSequence() {{
                 isPlayingSequence = true;
                 let i = 0;
                 
-                const interval = setInterval(() => {
-                    if (i < sequence.length) {
+                const interval = setInterval(() => {{
+                    if (i < sequence.length) {{
                         const tileIdx = sequence[i];
                         tiles[tileIdx].classList.add('flash');
-                        setTimeout(() => {
+                        setTimeout(() => {{
                             tiles[tileIdx].classList.remove('flash');
-                        }, 400);
+                        }}, 400);
                         i++;
-                    } else {
+                    }} else {{
                         clearInterval(interval);
                         isPlayingSequence = false;
-                        infoBar.innerText = `Score: ${score} | Your Turn! Repeat sequence.`;
-                    }
-                }, 750);
-            }
+                        infoBar.innerText = `Score: ${{score}} | Your Turn! Repeat sequence.`;
+                    }}
+                }}, 750);
+            }}
 
-            tiles.forEach((tile, idx) => {
-                tile.addEventListener('click', () => {
+            tiles.forEach((tile, idx) => {{
+                tile.addEventListener('click', () => {{
                     if (!gameActive || isPlayingSequence) return;
 
-                    if (idx === sequence[playerIndex]) {
+                    if (idx === sequence[playerIndex]) {{
                         tile.classList.add('flash');
                         setTimeout(() => tile.classList.remove('flash'), 200);
                         playerIndex++;
 
-                        if (playerIndex >= sequence.length) {
+                        if (playerIndex >= sequence.length) {{
                             score++;
-                            infoBar.innerText = `Great! Score: ${score}`;
+                            infoBar.innerText = `Great! Score: ${{score}}`;
                             
                             const url = new URL(window.parent.location.href);
                             url.searchParams.set('reactor_score', score);
-                            window.parent.history.replaceState({}, '', url);
+                            window.parent.history.replaceState({{}}, '', url);
 
                             setTimeout(nextRound, 1000);
-                        }
-                    } else {
+                        }}
+                    }} else {{
                         gameActive = false;
-                        infoBar.innerText = `Game Over! Final Score: ${score}`;
+                        infoBar.innerText = `Game Over! Final Score: ${{score}}`;
                         startBtn.innerText = 'Play Again';
                         startBtn.style.display = 'inline-block';
                         
                         tiles[idx].style.backgroundColor = '#dc2626';
-                        setTimeout(() => {
+                        setTimeout(() => {{
                             tiles[idx].style.backgroundColor = '';
-                        }, 500);
-                    }
-                });
-            });
+                        }}, 500);
+                    }}
+                }});
+            }});
         </script>
         </body>
         </html>
         """
-        # Increased component height to 520px so the Start/Play Again button is fully visible and unclipped
         components.html(reactor_html, height=520)
 
         best_scr = st.session_state.reactor_best_score
         last_scr = st.session_state.reactor_last_score if st.session_state.reactor_last_score is not None else 0
         st.write(f"**Highest Score:** {best_scr} &nbsp;&bull;&nbsp; **Last Score:** {last_scr}")
 
-    # --- MODULE 3: VERBAL MEMORY ---
+    # --- MODULE 3: VERBAL MEMORY (Enhanced Story with 3+ detailed recall questions) ---
     elif game_sub_tab == "Verbal Memory (Short Story Test)":
         st.subheader("Verbal Memory & Short Story Recall")
-        st.markdown("Read the short 3-line story carefully. A 30-second countdown will begin before questions are asked.")
+        st.markdown("Read the detailed clinical narrative carefully. A 30-second countdown will begin before questions are asked.")
 
         if 'story_state' not in st.session_state:
             st.session_state.story_state = 'READING'
@@ -764,13 +784,14 @@ elif selected_tab == "Cognitive Games":
             st.session_state.story_start_time = time.time()
 
         story_text = (
-            "1. Dr. Arthur walked through the rainy hospital corridors holding a blue file.\n"
-            "2. He met Nurse Clara near room 302 to discuss the morning patient charts.\n"
-            "3. They verified that the medication schedule was successfully updated for noon."
+            "1. On a rainy Tuesday morning at St. Jude Medical Center, Dr. Arthur walked briskly through the third-floor corridor while holding a thick blue patient file.\n"
+            "2. He met Nurse Clara near consultation room 302 at exactly 10:15 AM to review urgent morning lab reports.\n"
+            "3. They verified that patient Jonathan Vance's neurological medication dosage was successfully increased to 50 milligrams.\n"
+            "4. Before heading to surgery, Dr. Arthur left his silver stethoscope and leather briefcase on the wooden front desk."
         )
 
         if st.session_state.story_state == 'READING':
-            st.markdown(f"> **Story Passage:**\n> \n> {story_text}")
+            st.markdown(f"> **Detailed Clinical Narrative:**\n> \n> {story_text}")
             elapsed = int(time.time() - st.session_state.story_start_time)
             remaining = max(0, 30 - elapsed)
             st.markdown(f"### Time remaining to memorize: **{remaining} seconds**")
@@ -786,19 +807,23 @@ elif selected_tab == "Cognitive Games":
                 st.rerun()
 
         elif st.session_state.story_state == 'QUESTIONING':
-            st.markdown("### Recall Questions:")
-            ans1 = st.radio("Question 1: What color was the file Dr. Arthur was holding?", ["Red", "Blue", "Green", "Yellow"])
-            ans2 = st.radio("Question 2: Which room number were they near?", ["Room 104", "Room 205", "Room 302", "Room 410"])
+            st.markdown("### Detailed Recall Questions:")
+            ans1 = st.radio("Question 1: What color was the patient file Dr. Arthur was holding?", ["Red", "Blue", "Green", "Yellow"])
+            ans2 = st.radio("Question 2: Which consultation room were they near when meeting Nurse Clara?", ["Room 104", "Room 205", "Room 302", "Room 410"])
+            ans3 = st.radio("Question 3: What was the updated medication dosage for patient Jonathan Vance?", ["10 milligrams", "25 milligrams", "50 milligrams", "100 milligrams"])
+            ans4 = st.radio("Question 4: What items did Dr. Arthur leave on the wooden front desk before heading to surgery?", ["Silver stethoscope and leather briefcase", "Gold watch and pen", "Tablet and car keys", "Reading glasses and notebook"])
 
             if st.button("Submit Answers"):
                 score_v = 0
                 if ans1 == "Blue": score_v += 1
                 if ans2 == "Room 302": score_v += 1
+                if ans3 == "50 milligrams": score_v += 1
+                if ans4 == "Silver stethoscope and leather briefcase": score_v += 1
                 
-                if score_v == 2:
-                    st.success("Perfect recall! Verbal memory score: 2/2.")
+                if score_v == 4:
+                    st.success("Flawless recall! Verbal memory score: 4/4.")
                 else:
-                    st.warning(f"Recall score: {score_v}/2 correct. (Correct answers: Blue file, Room 302)")
+                    st.warning(f"Recall score: {score_v}/4 correct.\n\n*(Correct answers: Blue file, Room 302, 50 milligrams, Silver stethoscope and leather briefcase)*")
                 
                 if st.button("Restart Story Test"):
                     st.session_state.story_state = 'READING'
