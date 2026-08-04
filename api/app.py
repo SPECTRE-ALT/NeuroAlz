@@ -211,38 +211,46 @@ st.markdown(
         color: #1e293b !important;
     }
 
-    /* Reaction Test Box Styling */
-    .reaction-box-red {
+    /* Interactive Reaction Test Full-Width Box Buttons */
+    .reaction-btn-red > button {
         background-color: #b91c1c !important;
         border: 2px solid #ef4444 !important;
-        border-radius: 16px;
-        padding: 80px 20px;
-        text-align: center;
-        margin: 20px 0;
+        border-radius: 16px !important;
+        height: 180px !important;
+        width: 100% !important;
         color: #ffffff !important;
-        font-size: 2rem;
-        font-weight: bold;
-        box-shadow: 0 4px 20px rgba(185, 28, 28, 0.4);
-        cursor: pointer;
+        font-size: 2rem !important;
+        font-weight: bold !important;
+        box-shadow: 0 4px 20px rgba(185, 28, 28, 0.4) !important;
+        cursor: pointer !important;
     }
-    .reaction-box-red * {
+    .reaction-btn-red > button:hover {
+        background-color: #991b1b !important;
+        border-color: #f87171 !important;
+        color: #ffffff !important;
+    }
+    .reaction-btn-red > button * {
         color: #ffffff !important;
     }
 
-    .reaction-box-green {
+    .reaction-btn-green > button {
         background-color: #15803d !important;
         border: 2px solid #22c55e !important;
-        border-radius: 16px;
-        padding: 80px 20px;
-        text-align: center;
-        margin: 20px 0;
+        border-radius: 16px !important;
+        height: 180px !important;
+        width: 100% !important;
         color: #ffffff !important;
-        font-size: 2.5rem;
-        font-weight: bold;
-        box-shadow: 0 4px 20px rgba(21, 128, 61, 0.4);
-        cursor: pointer;
+        font-size: 2.5rem !important;
+        font-weight: bold !important;
+        box-shadow: 0 4px 20px rgba(21, 128, 61, 0.4) !important;
+        cursor: pointer !important;
     }
-    .reaction-box-green * {
+    .reaction-btn-green > button:hover {
+        background-color: #166534 !important;
+        border-color: #4ade80 !important;
+        color: #ffffff !important;
+    }
+    .reaction-btn-green > button * {
         color: #ffffff !important;
     }
 
@@ -382,7 +390,6 @@ def is_likely_mri(image):
         
         print(f"[DEBUG] Symmetry difference score: {diff:.1f}")
         
-        # Upper threshold check only: reject images with extreme structural asymmetry (e.g., knee/bone/non-brain scans)
         if diff > 42.0:
             return False, f"REJECTED: Structural asymmetry detected ({diff:.1f}). This does not match brain morphology (Possible Knee/Bone scan)."
             
@@ -633,7 +640,7 @@ elif selected_tab == "Cognitive Games":
     # --- MODULE 1: PROCESSING SPEED ---
     if game_sub_tab == "Processing Speed (Red/Green Reflex)":
         st.subheader("Processing Speed Reaction Assessment")
-        st.markdown("Instructions: Click **Start Test** to begin. Wait for the screen to turn **Green**, then click as fast as possible!")
+        st.markdown("Instructions: Click **Start Test** below. When the area turns **Green**, click it as fast as possible!")
 
         if 'reaction_state' not in st.session_state:
             st.session_state.reaction_state = 'IDLE'
@@ -658,31 +665,24 @@ elif selected_tab == "Cognitive Games":
                 st.rerun()
 
         elif state == 'WAITING':
-            # Check if user clicked early
             current_time = time.time()
             if current_time >= st.session_state.reaction_wait_time:
                 st.session_state.reaction_state = 'READY'
                 st.session_state.reaction_start_time = time.time()
                 st.rerun()
             else:
-                # Render red waiting box with click handler
-                st.markdown(
-                    '<div class="reaction-box-red">Wait for Green...<br><span style="font-size: 1.1rem; font-weight: normal;">(Click now = Too early!)</span></div>',
-                    unsafe_allow_html=True
-                )
-                if st.button("CLICK HERE", key="reaction_early_click"):
+                st.markdown('<div class="reaction-btn-red">', unsafe_allow_html=True)
+                if st.button("Wait for Green...\n(Clicking now = Too early!)", key="reaction_early_click"):
                     st.session_state.reaction_too_early = True
                     st.session_state.reaction_state = 'RESULT'
                     st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
                 time.sleep(0.05)
                 st.rerun()
 
         elif state == 'READY':
-            st.markdown(
-                '<div class="reaction-box-green">CLICK!</div>',
-                unsafe_allow_html=True
-            )
-            if st.button("CLICK HERE NOW!", key="reaction_click_ready"):
+            st.markdown('<div class="reaction-btn-green">', unsafe_allow_html=True)
+            if st.button("CLICK!", key="reaction_click_ready"):
                 duration_ms = (time.time() - st.session_state.reaction_start_time) * 1000.0
                 st.session_state.reaction_last_time = duration_ms
                 st.session_state.reaction_times.append(duration_ms)
@@ -690,6 +690,7 @@ elif selected_tab == "Cognitive Games":
                     st.session_state.reaction_best_time = duration_ms
                 st.session_state.reaction_state = 'RESULT'
                 st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
             time.sleep(0.05)
             st.rerun()
 
@@ -711,12 +712,10 @@ elif selected_tab == "Cognitive Games":
 
     # --- MODULE 2: HIPPOCAMPAL FUNCTION ---
     elif game_sub_tab == "Hippocampal Function (Pattern Match)":
-        # Anchor container with ID for viewport scroll preservation
         st.markdown('<div id="hippocampal-game-section"></div>', unsafe_allow_html=True)
         st.subheader("Hippocampal Spatial Pattern Matching (Reactor Pattern)")
         st.markdown("Tests spatial memory, sequence recall, and hippocampal pattern recognition.")
 
-        # Ensure all required state variables exist
         if "reactor_state" not in st.session_state:
             st.session_state.reactor_state = 'IDLE'
         if "reactor_sequence" not in st.session_state:
@@ -748,7 +747,6 @@ elif selected_tab == "Cognitive Games":
             if idx < len(seq) and tile_idx == seq[idx]:
                 st.session_state.reactor_current_index = idx + 1
                 if st.session_state.reactor_current_index >= len(seq):
-                    # Round cleared, append a new random tile avoiding immediate duplicate if possible, else standard choice
                     st.session_state.reactor_score = st.session_state.get("reactor_score", 0) + 1
                     current_score = st.session_state.reactor_score
                     if current_score > st.session_state.get("reactor_best_score", 0):
@@ -769,7 +767,7 @@ elif selected_tab == "Cognitive Games":
 
         if current_state == 'IDLE':
             st.markdown(
-                '<div class="reflex-box-waiting">Memorize the highlighted tile sequence on the 3x3 grid and repeat it back in the correct order. Each round adds a new random tile.</div>',
+                '<div class="reaction-box-waiting">Memorize the highlighted tile sequence on the 3x3 grid and repeat it back in the correct order. Each round adds a new random tile.</div>',
                 unsafe_allow_html=True
             )
             if st.button("Start Reactor Game", key="start_reactor_game"):
@@ -788,11 +786,10 @@ elif selected_tab == "Cognitive Games":
             seq_len = len(st.session_state.get("reactor_sequence", []))
             st.markdown(f"**Score:** {score_val} &nbsp;&bull;&nbsp; **Sequence Length:** {seq_len}")
 
-            # Handle sequence animation playback seamlessly on the single permanent grid container
-            if st.session_state.get("reactor_showing_sequence", False):
-                st.info("Watch the sequence playback...")
-                
-                # Render single permanent 3x3 grid container
+            # Persistent container to prevent full-page reruns and scroll-to-top jumping
+            game_container = st.container()
+
+            with game_container:
                 grid_placeholder = st.empty()
                 
                 def render_grid(active_idx=None):
@@ -803,56 +800,56 @@ elif selected_tab == "Cognitive Games":
                                 tile_num = r * 3 + c + 1
                                 with cols[c]:
                                     if tile_num == active_idx:
-                                        st.markdown(f'<div style="background-color: #2563eb; height: 90px; border-radius: 12px; border: 2px solid #1d4ed8; box-shadow: 0 0 20px rgba(37, 99, 235, 0.8);"></div>', unsafe_allow_html=True)
+                                        st.markdown(f'<div style="background-color: #38bdf8; aspect-ratio: 1 / 1; border-radius: 8px; border: 2px solid #0284c7; box-shadow: 0 0 20px rgba(56, 189, 248, 0.9);"></div>', unsafe_allow_html=True)
                                     else:
-                                        st.markdown(f'<div style="background-color: #e2e8f0; height: 90px; border-radius: 12px; border: 1px solid #cbd5e1;"></div>', unsafe_allow_html=True)
+                                        st.markdown(f'<div style="background-color: #cbd5e1; aspect-ratio: 1 / 1; border-radius: 8px; border: 1px solid #94a3b8;"></div>', unsafe_allow_html=True)
 
-                # Initial pause before playback
-                render_grid(None)
-                time.sleep(0.5)
-                
-                seq_to_show = st.session_state.get("reactor_sequence", [])
-                for idx in seq_to_show:
-                    render_grid(idx)
-                    time.sleep(0.6)
+                if st.session_state.get("reactor_showing_sequence", False):
+                    st.info("Watch the sequence playback...")
                     render_grid(None)
-                    time.sleep(0.25)
+                    time.sleep(0.4)
+                    
+                    seq_to_show = st.session_state.get("reactor_sequence", [])
+                    for idx in seq_to_show:
+                        render_grid(idx)
+                        time.sleep(0.55)
+                        render_grid(None)
+                        time.sleep(0.2)
 
-                st.session_state.reactor_showing_sequence = False
-                st.rerun()
+                    st.session_state.reactor_showing_sequence = False
+                    st.rerun()
+                else:
+                    st.success("Your Turn: Click the tiles in the correct sequence.")
+                    
+                    # Render permanent 3x3 grid of interactive square buttons without text/labels
+                    for r in range(3):
+                        cols = st.columns(3)
+                        for c in range(3):
+                            tile_num = r * 3 + c + 1
+                            with cols[c]:
+                                st.button("", key=f"reactor_tile_{tile_num}", on_click=handle_tile_click, args=(tile_num,))
 
-            else:
-                st.success("Your Turn: Click the tiles in the correct sequence.")
-                
-                # Single permanent interactive 3x3 grid for player input using clean square tiles without labels
-                for r in range(3):
-                    cols = st.columns(3)
-                    for c in range(3):
-                        tile_num = r * 3 + c + 1
-                        with cols[c]:
-                            if st.button("", key=f"reactor_tile_{tile_num}", on_click=handle_tile_click, args=(tile_num,)):
-                                pass
-                            # Apply inline CSS injection for square appearance via markdown overlay if needed, or rely on custom CSS styling for empty button appearance
-                st.markdown(
-                    """
-                    <style>
-                    /* Style 3x3 grid buttons to look like clean Skeld reactor square tiles */
-                    div[data-testid="column"] button {
-                        height: 90px !important;
-                        background-color: #e2e8f0 !important;
-                        border: 1px solid #cbd5e1 !important;
-                        border-radius: 12px !important;
-                        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-                        transition: all 0.15s ease;
-                    }
-                    div[data-testid="column"] button:hover {
-                        background-color: #cbd5e1 !important;
-                        border-color: #94a3b8 !important;
-                    }
-                    </style>
-                    """,
-                    unsafe_allow_html=True
-                )
+                    st.markdown(
+                        """
+                        <style>
+                        /* Style 3x3 grid buttons into perfect equal squares resembling Skeld reactor */
+                        div[data-testid="column"] button {
+                            aspect-ratio: 1 / 1 !important;
+                            height: auto !important;
+                            background-color: #cbd5e1 !important;
+                            border: 1px solid #94a3b8 !important;
+                            border-radius: 8px !important;
+                            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                            transition: all 0.1s ease;
+                        }
+                        div[data-testid="column"] button:hover {
+                            background-color: #94a3b8 !important;
+                            border-color: #64748b !important;
+                        }
+                        </style>
+                        """,
+                        unsafe_allow_html=True
+                    )
 
         elif current_state == 'GAME_OVER':
             st.error("Incorrect tile selected! Game Over.")
@@ -862,7 +859,7 @@ elif selected_tab == "Cognitive Games":
             
             st.markdown(
                 f'''
-                <div class="reflex-box-waiting">
+                <div class="reaction-box-waiting">
                     <b>Final Score:</b> {final_scr}<br>
                     <b>Longest Sequence:</b> {seq_len}<br>
                     <b>Highest Score:</b> {best_scr}
@@ -880,11 +877,10 @@ elif selected_tab == "Cognitive Games":
                 st.session_state.reactor_active_flash = None
                 st.rerun()
 
-        # Viewport Scroll Anchor / Position Preservation Script
+        # Viewport preservation script anchor
         st.markdown(
             """
             <script>
-            // Ensure viewport stays locked or returns smoothly to the hippocampal section anchor on interactions
             const hippocampalAnchor = document.getElementById("hippocampal-game-section");
             if (hippocampalAnchor) {
                 hippocampalAnchor.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
