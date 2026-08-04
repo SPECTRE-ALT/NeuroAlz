@@ -75,6 +75,7 @@ The original Flask implementation (`app.py`) for the backend API has been includ
 
 
 For those who want to try the streamlit web version out here is the link - https://neuroalz-dx3e2tcbrvvdnrjdzhvqxf.streamlit.app/
+The streamlit web app has all the features i have said in the flask version but a different UI every time you upload an image ensure to click teh button "Run Clinical Analysis" or it wont scan and it may show you the previous image's result. Thanks for viewing
 x               x                  x                      x                  x                       x                  x
 
 
