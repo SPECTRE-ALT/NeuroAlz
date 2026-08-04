@@ -380,9 +380,7 @@ def is_likely_mri(image):
         
         print(f"[DEBUG] Symmetry difference score: {diff:.1f}")
         
-        if diff < 10.0:
-            return False, f"REJECTED: Image lacks sufficient biological structural variation (Symmetry Diff: {diff:.1f})."
-        
+        # Upper threshold check only: reject images with extreme structural asymmetry (e.g., knee/bone/non-brain scans)
         if diff > 42.0:
             return False, f"REJECTED: Structural asymmetry detected ({diff:.1f}). This does not match brain morphology (Possible Knee/Bone scan)."
             
