@@ -31,7 +31,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- GLOBAL UI CSS (No scroll hacks, pure layout stabilization) ---
+# --- GLOBAL UI CSS & READABILITY FIXES ---
 st.markdown(
     """
     <style>
@@ -107,6 +107,38 @@ st.markdown(
         background-color: #eff6ff !important;
         color: #1d4ed8 !important;
         border-color: #1d4ed8 !important;
+    }
+
+    /* FIX FOR DROPDOWN / SELECTBOX READABILITY (Option A: White background with black text) */
+    div[data-baseweb="select"] {
+        background-color: #ffffff !important;
+    }
+    div[data-baseweb="select"] > div {
+        background-color: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #1e293b !important;
+        border-radius: 8px;
+    }
+    div[data-baseweb="select"] span, 
+    div[data-baseweb="select"] div,
+    div[data-baseweb="select"] * {
+        color: #1e293b !important;
+    }
+    
+    /* Popover/Dropdown menu list items readability */
+    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[data-baseweb="menu"] {
+        background-color: #ffffff !important;
+    }
+    div[data-baseweb="popover"] *, div[data-baseweb="menu"] *, ul[data-baseweb="menu"] * {
+        color: #1e293b !important;
+    }
+    li[role="option"] {
+        background-color: #ffffff !important;
+        color: #1e293b !important;
+    }
+    li[role="option"]:hover {
+        background-color: #f1f5f9 !important;
+        color: #1d4ed8 !important;
     }
 
     .games-panel, .info-panel, .start-reflex-card, .stAlert {
@@ -398,7 +430,6 @@ elif selected_tab == "Cognitive Games":
         st.subheader("Processing Speed Reaction Assessment")
         st.markdown("Instructions: Click the box below to start. When it turns **Green**, click it as fast as possible!")
 
-        # Handle score reporting back from client component via query params or session state handling
         query_params = st.query_params
         if "reaction_ms" in query_params:
             try:
@@ -410,7 +441,6 @@ elif selected_tab == "Cognitive Games":
             except ValueError:
                 pass
 
-        # Zero-rerun browser component for reaction test
         reaction_html = """
         <!DOCTYPE html>
         <html>
@@ -463,20 +493,19 @@ elif selected_tab == "Cognitive Games":
             const box = document.getElementById('reaction-box');
             const statusText = document.getElementById('status-text');
             
-            let state = 'IDLE'; // IDLE, WAITING, READY, RESULT, EARLY
+            let state = 'IDLE';
             let startTime = 0;
             let timeoutId = null;
 
             box.addEventListener('click', () => {
                 if (state === 'IDLE' || state === 'RESULT' || state === 'EARLY') {
-                    // Start test
                     state = 'WAITING';
                     box.style.backgroundColor = '#dc2626';
                     box.style.borderColor = '#ef4444';
                     box.innerHTML = 'WAIT...';
                     statusText.innerText = 'Wait for green... Do not click early!';
                     
-                    const randomDelay = Math.random() * 3000 + 2000; // 2 to 5 seconds
+                    const randomDelay = Math.random() * 3000 + 2000;
                     timeoutId = setTimeout(() => {
                         state = 'READY';
                         box.style.backgroundColor = '#16a34a';
@@ -487,7 +516,6 @@ elif selected_tab == "Cognitive Games":
                     }, randomDelay);
 
                 } else if (state === 'WAITING') {
-                    // Clicked too early
                     clearTimeout(timeoutId);
                     state = 'EARLY';
                     box.style.backgroundColor = '#d97706';
@@ -496,7 +524,6 @@ elif selected_tab == "Cognitive Games":
                     statusText.innerText = 'You clicked while red. Click here to try again.';
 
                 } else if (state === 'READY') {
-                    // Successful reaction
                     const reactionTime = performance.now() - startTime;
                     state = 'RESULT';
                     box.style.backgroundColor = '#2563eb';
@@ -504,7 +531,6 @@ elif selected_tab == "Cognitive Games":
                     box.innerHTML = reactionTime.toFixed(1) + ' ms';
                     statusText.innerText = 'Reaction recorded! Click box to try again.';
                     
-                    // Send result back to Streamlit via URL parameter without full page reload/jump
                     const url = new URL(window.parent.location.href);
                     url.searchParams.set('reaction_ms', reactionTime.toFixed(1));
                     window.parent.history.replaceState({}, '', url);
@@ -516,7 +542,6 @@ elif selected_tab == "Cognitive Games":
         """
         components.html(reaction_html, height=430)
 
-        # Display reaction statistics
         if st.session_state.reaction_times:
             last_ms = st.session_state.reaction_times[-1]
             best_ms = st.session_state.reaction_best_time
@@ -524,12 +549,11 @@ elif selected_tab == "Cognitive Games":
             st.success(f"**Latest Reaction Time:** {last_ms:.1f} ms")
             st.write(f"**Best Time:** {best_ms:.1f} ms &nbsp;&bull;&nbsp; **Average Time:** {avg_ms:.1f} ms over {len(st.session_state.reaction_times)} attempts.")
 
-    # --- MODULE 2: HIPPOCAMPAL FUNCTION (Zero-rerun browser component matching Skeld Memory Game) ---
+    # --- MODULE 2: HIPPOCAMPAL FUNCTION (Zero-rerun browser component with full button visibility height) ---
     elif game_sub_tab == "Hippocampal Function (Pattern Match)":
         st.subheader("Hippocampal Spatial Pattern Matching (Reactor Pattern)")
         st.markdown("Tests spatial memory, sequence recall, and hippocampal pattern recognition. Memorize the flashing sequence and repeat it back.")
 
-        # Handle score reporting from hippocampal browser component
         query_params = st.query_params
         if "reactor_score" in query_params:
             try:
@@ -547,13 +571,14 @@ elif selected_tab == "Cognitive Games":
         <style>
             body {
                 margin: 0;
-                padding: 0;
+                padding: 10px;
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                 background: transparent;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                justify-content: center;
+                justify-content: flex-start;
+                box-sizing: border-box;
             }
             .game-wrapper {
                 background: #ffffff;
@@ -564,12 +589,13 @@ elif selected_tab == "Cognitive Games":
                 width: 100%;
                 box-shadow: 0 2px 10px rgba(0,0,0,0.05);
                 text-align: center;
+                box-sizing: border-box;
             }
             .skeld-grid {
                 display: grid;
                 grid-template-columns: repeat(3, 1fr);
                 gap: 12px;
-                max-width: 360px;
+                max-width: 320px;
                 margin: 15px auto;
             }
             .tile {
@@ -591,22 +617,25 @@ elif selected_tab == "Cognitive Games":
                 border-color: #94a3b8;
             }
             #info-bar {
-                font-size: 1.1rem;
+                font-size: 1.05rem;
                 font-weight: 600;
                 color: #1e293b;
-                margin-bottom: 10px;
+                margin-bottom: 12px;
             }
             #start-btn {
                 background-color: #2563eb;
                 color: #ffffff;
-                border: none;
+                border: 1px solid #1d4ed8;
                 border-radius: 8px;
-                padding: 10px 20px;
+                padding: 12px 24px;
                 font-size: 1rem;
                 font-weight: 600;
                 cursor: pointer;
                 margin-top: 10px;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                display: inline-block;
+                width: auto;
+                min-width: 180px;
             }
             #start-btn:hover {
                 background-color: #1d4ed8;
@@ -686,7 +715,6 @@ elif selected_tab == "Cognitive Games":
                     if (!gameActive || isPlayingSequence) return;
 
                     if (idx === sequence[playerIndex]) {
-                        // Correct tile clicked
                         tile.classList.add('flash');
                         setTimeout(() => tile.classList.remove('flash'), 200);
                         playerIndex++;
@@ -695,7 +723,6 @@ elif selected_tab == "Cognitive Games":
                             score++;
                             infoBar.innerText = `Great! Score: ${score}`;
                             
-                            // Send score back to Streamlit URL
                             const url = new URL(window.parent.location.href);
                             url.searchParams.set('reactor_score', score);
                             window.parent.history.replaceState({}, '', url);
@@ -703,7 +730,6 @@ elif selected_tab == "Cognitive Games":
                             setTimeout(nextRound, 1000);
                         }
                     } else {
-                        // Incorrect tile clicked -> Game Over
                         gameActive = false;
                         infoBar.innerText = `Game Over! Final Score: ${score}`;
                         startBtn.innerText = 'Play Again';
@@ -720,9 +746,9 @@ elif selected_tab == "Cognitive Games":
         </body>
         </html>
         """
-        components.html(reactor_html, height=450)
+        # Increased component height to 520px so the Start/Play Again button is fully visible and unclipped
+        components.html(reactor_html, height=520)
 
-        # Display persistent high score statistics
         best_scr = st.session_state.reactor_best_score
         last_scr = st.session_state.reactor_last_score if st.session_state.reactor_last_score is not None else 0
         st.write(f"**Highest Score:** {best_scr} &nbsp;&bull;&nbsp; **Last Score:** {last_scr}")
