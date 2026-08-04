@@ -30,11 +30,11 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- GLOBAL UI & BUTTON READABILITY CSS ---
+# --- GLOBAL UI & VIEWPORT STABILIZATION CSS ---
 st.markdown(
     """
     <style>
-    /* Global Container Styles & UI Readability Fixes */
+    /* Global Container Styles & Viewport Stabilization */
     .stApp {
         background-color: #f1f5f9;
         color: #0f172a !important;
@@ -211,46 +211,48 @@ st.markdown(
         color: #1e293b !important;
     }
 
-    /* Interactive Reaction Test Full-Width Box Buttons */
-    .reaction-btn-red > button {
-        background-color: #b91c1c !important;
+    /* Professional Reaction Test Box Styling (700px wide x 350px tall) */
+    .reaction-panel-red button {
+        background-color: #dc2626 !important;
         border: 2px solid #ef4444 !important;
         border-radius: 16px !important;
-        height: 180px !important;
-        width: 100% !important;
-        color: #ffffff !important;
-        font-size: 2rem !important;
-        font-weight: bold !important;
-        box-shadow: 0 4px 20px rgba(185, 28, 28, 0.4) !important;
-        cursor: pointer !important;
-    }
-    .reaction-btn-red > button:hover {
-        background-color: #991b1b !important;
-        border-color: #f87171 !important;
-        color: #ffffff !important;
-    }
-    .reaction-btn-red > button * {
-        color: #ffffff !important;
-    }
-
-    .reaction-btn-green > button {
-        background-color: #15803d !important;
-        border: 2px solid #22c55e !important;
-        border-radius: 16px !important;
-        height: 180px !important;
+        height: 350px !important;
+        max-width: 700px !important;
         width: 100% !important;
         color: #ffffff !important;
         font-size: 2.5rem !important;
-        font-weight: bold !important;
-        box-shadow: 0 4px 20px rgba(21, 128, 61, 0.4) !important;
+        font-weight: 800 !important;
+        box-shadow: 0 8px 25px rgba(220, 38, 38, 0.35) !important;
         cursor: pointer !important;
+        letter-spacing: 2px;
     }
-    .reaction-btn-green > button:hover {
-        background-color: #166534 !important;
-        border-color: #4ade80 !important;
+    .reaction-panel-red button:hover {
+        background-color: #b91c1c !important;
+        border-color: #f87171 !important;
+    }
+    .reaction-panel-red button * {
         color: #ffffff !important;
     }
-    .reaction-btn-green > button * {
+
+    .reaction-panel-green button {
+        background-color: #16a34a !important;
+        border: 2px solid #22c55e !important;
+        border-radius: 16px !important;
+        height: 350px !important;
+        max-width: 700px !important;
+        width: 100% !important;
+        color: #ffffff !important;
+        font-size: 3rem !important;
+        font-weight: 900 !important;
+        box-shadow: 0 8px 25px rgba(22, 163, 74, 0.4) !important;
+        cursor: pointer !important;
+        letter-spacing: 3px;
+    }
+    .reaction-panel-green button:hover {
+        background-color: #15803d !important;
+        border-color: #4ade80 !important;
+    }
+    .reaction-panel-green button * {
         color: #ffffff !important;
     }
 
@@ -282,7 +284,45 @@ st.markdown(
     .start-reflex-card *, .start-reflex-card strong, .start-reflex-card span, .start-reflex-card p {
         color: #1e293b !important;
     }
+    
+    /* Skeld Reactor Memory Grid Styles */
+    .skeld-grid-container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        max-width: 420px;
+        margin: 20px auto;
+    }
     </style>
+    
+    <!-- Global Viewport & Scroll Position Persistence Script -->
+    <script>
+    (function() {
+        // Save scroll position before any DOM update/rerun
+        window.addEventListener('beforeunload', function() {
+            sessionStorage.setItem('scrollpos', window.scrollY);
+        });
+        
+        // Restore scroll position instantly after DOM loads or Streamlit script runs
+        document.addEventListener('DOMContentLoaded', function() {
+            if (sessionStorage.getItem('scrollpos') !== null) {
+                window.scrollTo(0, parseInt(sessionStorage.getItem('scrollpos')));
+            }
+        });
+        
+        // Continuous Mutation Observer to prevent automatic top-jumping during Streamlit reruns
+        const observer = new MutationObserver(function() {
+            const savedPos = sessionStorage.getItem('scrollpos');
+            if (savedPos !== null && Math.abs(window.scrollY - parseInt(savedPos)) > 50) {
+                window.scrollTo(0, parseInt(savedPos));
+            }
+        });
+        
+        window.addEventListener('scroll', function() {
+            sessionStorage.setItem('scrollpos', window.scrollY);
+        });
+    })();
+    </script>
     """,
     unsafe_allow_html=True
 )
@@ -671,8 +711,8 @@ elif selected_tab == "Cognitive Games":
                 st.session_state.reaction_start_time = time.time()
                 st.rerun()
             else:
-                st.markdown('<div class="reaction-btn-red">', unsafe_allow_html=True)
-                if st.button("Wait for Green...\n(Clicking now = Too early!)", key="reaction_early_click"):
+                st.markdown('<div class="reaction-panel-red">', unsafe_allow_html=True)
+                if st.button("WAIT...", key="reaction_click_red"):
                     st.session_state.reaction_too_early = True
                     st.session_state.reaction_state = 'RESULT'
                     st.rerun()
@@ -681,8 +721,8 @@ elif selected_tab == "Cognitive Games":
                 st.rerun()
 
         elif state == 'READY':
-            st.markdown('<div class="reaction-btn-green">', unsafe_allow_html=True)
-            if st.button("CLICK!", key="reaction_click_ready"):
+            st.markdown('<div class="reaction-panel-green">', unsafe_allow_html=True)
+            if st.button("CLICK!", key="reaction_click_green"):
                 duration_ms = (time.time() - st.session_state.reaction_start_time) * 1000.0
                 st.session_state.reaction_last_time = duration_ms
                 st.session_state.reaction_times.append(duration_ms)
@@ -786,7 +826,7 @@ elif selected_tab == "Cognitive Games":
             seq_len = len(st.session_state.get("reactor_sequence", []))
             st.markdown(f"**Score:** {score_val} &nbsp;&bull;&nbsp; **Sequence Length:** {seq_len}")
 
-            # Persistent container to prevent full-page reruns and scroll-to-top jumping
+            # Single persistent placeholder container for the 3x3 Skeld grid to prevent duplicate grids or page rebuilding
             game_container = st.container()
 
             with game_container:
@@ -794,15 +834,30 @@ elif selected_tab == "Cognitive Games":
                 
                 def render_grid(active_idx=None):
                     with grid_placeholder.container():
+                        st.markdown('<div class="skeld-grid-container">', unsafe_allow_html=True)
+                        cols = st.columns(3)
                         for r in range(3):
-                            cols = st.columns(3)
                             for c in range(3):
                                 tile_num = r * 3 + c + 1
-                                with cols[c]:
-                                    if tile_num == active_idx:
-                                        st.markdown(f'<div style="background-color: #38bdf8; aspect-ratio: 1 / 1; border-radius: 8px; border: 2px solid #0284c7; box-shadow: 0 0 20px rgba(56, 189, 248, 0.9);"></div>', unsafe_allow_html=True)
-                                    else:
-                                        st.markdown(f'<div style="background-color: #cbd5e1; aspect-ratio: 1 / 1; border-radius: 8px; border: 1px solid #94a3b8;"></div>', unsafe_allow_html=True)
+                                # Determine background color
+                                bg_color = "#38bdf8" if tile_num == active_idx else "#334155"
+                                border_color = "#0284c7" if tile_num == active_idx else "#64748b"
+                                box_shadow = "0 0 20px rgba(56, 189, 248, 0.9)" if tile_num == active_idx else "0 4px 6px rgba(0,0,0,0.1)"
+                                
+                                st.markdown(
+                                    f'''
+                                    <div style="
+                                        background-color: {bg_color};
+                                        aspect-ratio: 1 / 1;
+                                        border-radius: 8px;
+                                        border: 2px solid {border_color};
+                                        box-shadow: {box_shadow};
+                                        transition: background-color 0.15s ease;
+                                    "></div>
+                                    ''',
+                                    unsafe_allow_html=True
+                                )
+                        st.markdown('</div>', unsafe_allow_html=True)
 
                 if st.session_state.get("reactor_showing_sequence", False):
                     st.info("Watch the sequence playback...")
@@ -821,30 +876,32 @@ elif selected_tab == "Cognitive Games":
                 else:
                     st.success("Your Turn: Click the tiles in the correct sequence.")
                     
-                    # Render permanent 3x3 grid of interactive square buttons without text/labels
+                    # Render permanent single 3x3 grid of interactive square buttons without text or labels
+                    st.markdown('<div class="skeld-grid-container">', unsafe_allow_html=True)
                     for r in range(3):
                         cols = st.columns(3)
                         for c in range(3):
                             tile_num = r * 3 + c + 1
                             with cols[c]:
                                 st.button("", key=f"reactor_tile_{tile_num}", on_click=handle_tile_click, args=(tile_num,))
+                    st.markdown('</div>', unsafe_allow_html=True)
 
                     st.markdown(
                         """
                         <style>
-                        /* Style 3x3 grid buttons into perfect equal squares resembling Skeld reactor */
+                        /* Style 3x3 grid buttons into perfect equal squares resembling Among Us Skeld reactor */
                         div[data-testid="column"] button {
                             aspect-ratio: 1 / 1 !important;
                             height: auto !important;
-                            background-color: #cbd5e1 !important;
-                            border: 1px solid #94a3b8 !important;
+                            background-color: #334155 !important;
+                            border: 2px solid #64748b !important;
                             border-radius: 8px !important;
-                            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
                             transition: all 0.1s ease;
                         }
                         div[data-testid="column"] button:hover {
-                            background-color: #94a3b8 !important;
-                            border-color: #64748b !important;
+                            background-color: #475569 !important;
+                            border-color: #94a3b8 !important;
                         }
                         </style>
                         """,
@@ -876,19 +933,6 @@ elif selected_tab == "Cognitive Games":
                 st.session_state.reactor_game_over = False
                 st.session_state.reactor_active_flash = None
                 st.rerun()
-
-        # Viewport preservation script anchor
-        st.markdown(
-            """
-            <script>
-            const hippocampalAnchor = document.getElementById("hippocampal-game-section");
-            if (hippocampalAnchor) {
-                hippocampalAnchor.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-            </script>
-            """,
-            unsafe_allow_html=True
-        )
 
     # --- MODULE 3: VERBAL MEMORY ---
     elif game_sub_tab == "Verbal Memory (Short Story Test)":
